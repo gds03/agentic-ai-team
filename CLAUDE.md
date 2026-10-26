@@ -62,8 +62,11 @@ idea ──architect──▶ designed ──scrum-master──▶ ready ──d
 
 ### Running the pipeline in one session
 
-`/deliver BL-NNNN` runs the whole chain for one item inside a single session:
-architect (if not designed) → developer → reviewer → developer fixes (max 2 rounds) →
+`/deliver BL-NNNN` first stops for a **pre-flight confirmation**: it summarises the item
+(goal, criteria, dependencies, open questions, what will be touched, red flags) and asks the
+product owner to confirm, adjust, or review the overall direction. Nothing is delegated
+until they say yes, every time. Then it runs the whole chain for one item inside a single
+session: architect (if not designed) → developer → reviewer → developer fixes (max 2 rounds) →
 qa → PR. The orchestrating session acts as scrum master: it hands each agent the item
 file path and the outputs of the previous step, and records each hand-off in the item's
 *Log*. Other commands: `/groom`, `/design`, `/implement`, `/review`, `/qa`, `/research`,

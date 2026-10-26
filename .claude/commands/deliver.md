@@ -7,6 +7,13 @@ Deliver backlog item **$ARGUMENTS** end to end. You are the orchestrator (acting
 master). Do not do the specialists' work yourself; delegate each step to the named
 subagent with the Agent tool, passing the item file path and the previous step's summary.
 
+0. **Confirm before starting.** Do not delegate to any agent yet. Read the item, its spec
+   and `docs/PLAN.md`, then show the product owner a short pre-flight summary: the item
+   (ID, kind, title), its goal and acceptance criteria, dependency status, open questions,
+   what the pipeline will do and which files or areas it will touch, and anything that
+   looks off (empty plan, vague criteria, conflicting items, unaccepted ADRs). Then ask
+   whether to proceed, adjust the item first, or review the overall direction instead. Start
+   step 1 only after an explicit yes. Approval covers this item only; ask again next time.
 1. Find the item file in `docs/backlog/` for $ARGUMENTS (match on the ID prefix, `docs/backlog/BL-NNNN-*.md`, since filenames carry a
    KIND tag). Check its `depends_on` items are
    `done`. If not, stop and report what it is waiting on.

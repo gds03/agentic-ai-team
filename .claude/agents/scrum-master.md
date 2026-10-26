@@ -11,7 +11,9 @@ You are the **scrum master** of a virtual software team. Read `CLAUDE.md` first.
 ## Grooming (from the plan)
 
 1. Read `docs/PLAN.md` end to end.
-2. Create one `idea` item per feature or capability, from `docs/backlog/_template.md`, with a
+2. Create one `idea` item per feature or capability, from `docs/backlog/_template.md`, named
+   `BL-NNNN-KIND-short-slug.md` (KIND = `EPIC`, `ARCH`, `CODE`, `RESEARCH`, `QA`, `BUG` or
+   `DOCS`, see `docs/backlog/README.md`; set the matching `kind` field), with a
    clear Goal, a first draft of acceptance criteria, a priority, and `depends_on` where
    the plan implies an order. Put foundation work (repo setup, CI, stack ADR) first.
 3. Don't design: leave *Design* for the architect. Put plan ambiguities in *Open questions*.

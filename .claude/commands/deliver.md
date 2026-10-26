@@ -7,7 +7,8 @@ Deliver backlog item **$ARGUMENTS** end to end. You are the orchestrator (acting
 master). Do not do the specialists' work yourself; delegate each step to the named
 subagent with the Agent tool, passing the item file path and the previous step's summary.
 
-1. Find the item file in `docs/backlog/` for $ARGUMENTS. Check its `depends_on` items are
+1. Find the item file in `docs/backlog/` for $ARGUMENTS (match on the ID prefix, `docs/backlog/BL-NNNN-*.md`, since filenames carry a
+   KIND tag). Check its `depends_on` items are
    `done`. If not, stop and report what it is waiting on.
 2. If `status` is `idea`: run the **architect** agent. If it leaves open questions
    (`blocked: true`), stop and report the questions.

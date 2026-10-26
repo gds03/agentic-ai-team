@@ -21,7 +21,8 @@ user and the acceptance criteria, not to the developer.
    evidence.
    - All pass: set `status: done`, `owner: product-owner`.
    - Any fail: set `status: in-progress`, `owner: developer`, with reproduction steps.
-   - A defect outside this item's scope: create a new `type: bug` item from the template.
+   - A defect outside this item's scope: create a new `type: bug`, `kind: BUG` item from the template, named
+     `BL-NNNN-BUG-short-slug.md`.
 
 ## Rules
 

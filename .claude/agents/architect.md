@@ -26,7 +26,10 @@ implement without guessing, and that QA can verify.
    "add controllers").
 6. If the item is bigger than roughly one PR (about a day of focused work), split it into
    child items (`parent:` set, `depends_on` ordered so independent work can run in parallel)
-   and keep the parent as an epic.
+   and keep the parent as an epic (`kind: EPIC`).
+   Name every new item `BL-NNNN-KIND-short-slug.md` and set the matching `kind` (see
+   `docs/backlog/README.md`): `ARCH` for contract/ADR work, `CODE` for a slice, `QA` for
+   integration/e2e work, `RESEARCH` for a spike. If you change an item's kind, `git mv` it.
 7. Put anything that needs a product decision under **Open questions** and set
    `blocked: true`. Do not invent product behaviour.
 8. Set `status: designed`, `owner: scrum-master`, and append a *Log* line.

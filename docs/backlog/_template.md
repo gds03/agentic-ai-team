@@ -1,6 +1,7 @@
 ---
 id: BL-NNNN
 title: 
+kind: CODE            # EPIC | ARCH | CODE | RESEARCH | QA | BUG | DOCS; must match the filename: BL-NNNN-KIND-short-slug.md
 type: feature
 status: idea
 priority: P2

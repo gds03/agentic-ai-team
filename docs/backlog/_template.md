@@ -31,4 +31,4 @@ pr:
 
 ## Log
 
-- YYYY-MM-DD scrum-master: created
+- YYYY-MM-DD HH:MM scrum-master: created

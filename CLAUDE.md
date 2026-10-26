@@ -87,6 +87,9 @@ the code the item covers.
 - **ADR filenames** name the backlog item they belong to: `BL-NNNN-ADRNNNN-subject.md`
   (e.g. `BL-0001-ADR0001-tech-stack.md`). Inside, the decision is still `ADR-NNNN`. Rules in
   [`docs/adr/README.md`](docs/adr/README.md).
+- **Item logs** are append-only, one line per event, stamped with date and time:
+  `YYYY-MM-DD HH:MM role: what happened` (local time, taken from the system clock via
+  `date '+%Y-%m-%d %H:%M'`, not guessed).
 - **Branches**: `bl-NNNN-short-slug` when you choose the name; if the environment assigns
   a branch, use it and put the item ID in the PR title.
 - **Commits**: imperative mood, prefix with the item ID, e.g. `BL-0007: add booking slot validation`.

@@ -57,4 +57,6 @@ items by status, what is blocked, and what can start next.
 - **Acceptance criteria**: numbered, testable. QA verifies each one.
 - **Design**: filled by the architect: approach, contracts, files likely touched.
 - **Open questions**: for the product owner. Unanswered questions block the item.
-- **Log**: append-only, one line per hand-off: `YYYY-MM-DD role: what happened`.
+- **Log**: append-only, one line per hand-off: `YYYY-MM-DD HH:MM role: what happened`.
+  Time is 24-hour local time of the machine; read it from the system (`date '+%Y-%m-%d %H:%M'`)
+  rather than guessing, and never edit or reorder earlier lines.

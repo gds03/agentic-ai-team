@@ -81,7 +81,8 @@ the code the item covers.
 - **IDs**: backlog items `BL-NNNN`, ADRs `ADR-NNNN`. Take the next free number.
 - **Backlog filenames** carry the kind of work: `BL-NNNN-KIND-short-slug.md`, with KIND one
   of `EPIC`, `ARCH`, `CODE`, `RESEARCH`, `QA`, `BUG`, `DOCS` (e.g. `BL-0007-ARCH-auth-strategy.md`),
-  mirrored in the item's `kind` field. Rules in [`docs/backlog/README.md`](docs/backlog/README.md).
+  mirrored in the item's `kind` field. An item split from a parent adds the parent's ID after
+  its own: `BL-0018-BL-0017-CODE-services-manage-services.md` (matches `parent: BL-0017`). Rules in [`docs/backlog/README.md`](docs/backlog/README.md).
   Always refer to items by ID (`BL-0007`) in commits, PRs and `depends_on`.
 - **ADR filenames** name the backlog item they belong to: `BL-NNNN-ADRNNNN-subject.md`
   (e.g. `BL-0001-ADR0001-tech-stack.md`). Inside, the decision is still `ADR-NNNN`. Rules in

@@ -1,6 +1,10 @@
 # Backlog
 
 One markdown file per item: `BL-NNNN-KIND-short-slug.md`, e.g. `BL-0007-ARCH-auth-strategy.md`.
+An item split from a parent carries the parent's ID right after its own:
+`BL-NNNN-BL-PPPP-KIND-short-slug.md`, e.g. `BL-0018-BL-0017-CODE-services-manage-services.md`
+is item 18, a child of `BL-0017`. The parent ID must match the `parent` field. Top-level items
+have no parent segment.
 One file per item (instead of one big board) means parallel sessions rarely conflict. Copy
 [`_template.md`](_template.md) to add one.
 
@@ -22,8 +26,9 @@ The `KIND` tag tells you at a glance what kind of work the item is. It is also s
 Rules:
 - Pick the kind by the item's **main deliverable**, not by the stage it is in. A `CODE`
   item still goes through design, review and QA; it does not turn into `ARCH` or `QA`.
-- The `id` never changes. If the kind has to change, rename the file (`git mv`) and update
-  `kind`; references use `BL-NNNN` so they stay valid.
+- The `id` never changes. If the kind or parent has to change, rename the file (`git mv`)
+  and update `kind`/`parent`; references use `BL-NNNN` so they stay valid.
+- Only direct children carry their parent's ID (one level, not the whole ancestry).
 - Split items follow the same rule: an `EPIC` is split into `ARCH`, `CODE`, `QA`... children.
 
 The board is derived, not maintained: run `/status` to have the scrum master summarise

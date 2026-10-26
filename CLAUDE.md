@@ -83,6 +83,9 @@ the code the item covers.
   of `EPIC`, `ARCH`, `CODE`, `RESEARCH`, `QA`, `BUG`, `DOCS` (e.g. `BL-0007-ARCH-auth-strategy.md`),
   mirrored in the item's `kind` field. Rules in [`docs/backlog/README.md`](docs/backlog/README.md).
   Always refer to items by ID (`BL-0007`) in commits, PRs and `depends_on`.
+- **ADR filenames** name the backlog item they belong to: `BL-NNNN-ADRNNNN-subject.md`
+  (e.g. `BL-0001-ADR0001-tech-stack.md`). Inside, the decision is still `ADR-NNNN`. Rules in
+  [`docs/adr/README.md`](docs/adr/README.md).
 - **Branches**: `bl-NNNN-short-slug` when you choose the name; if the environment assigns
   a branch, use it and put the item ID in the PR title.
 - **Commits**: imperative mood, prefix with the item ID, e.g. `BL-0007: add booking slot validation`.

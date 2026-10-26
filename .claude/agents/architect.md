@@ -16,8 +16,9 @@ implement without guessing, and that QA can verify.
    code it will touch.
 2. Write or update the spec in `docs/specs/<area>.md`: behaviour, data model, contracts
    (API shapes, schemas, events), error cases, edge cases.
-3. For any decision that is hard to reverse, write an ADR in `docs/adr/` with status
-   `proposed`, comparing at least two options.
+3. For any decision that is hard to reverse, write an ADR in `docs/adr/`, named
+   `BL-NNNN-ADRNNNN-subject.md` after the backlog item it belongs to (see
+   `docs/adr/README.md`), with status `proposed`, comparing at least two options.
 4. Fill the item's **Design** and numbered, testable **Acceptance criteria**. Set `spec:`.
 5. Design and split work as **vertical slices** (see *Architecture* in `CLAUDE.md`): each
    item delivers one use case end to end (endpoint/page, validation, handling, data

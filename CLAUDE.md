@@ -130,6 +130,7 @@ Build and test commands (keep this up to date once the stack exists):
 CLAUDE.md               this file: team workflow and conventions
 .claude/agents/         role definitions (architect, developer, reviewer, qa, scrum-master, researcher)
 .claude/commands/       slash commands that drive the workflow
+tools/board.mjs         backlog board + weekly report: `node tools/board.mjs --open` (team tooling, no deps)
 docs/PLAN.md            the product plan (source of truth for scope)
 docs/backlog/           one markdown file per backlog item
 docs/specs/             feature/technical specs written by the architect

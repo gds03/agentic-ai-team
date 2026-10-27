@@ -14,6 +14,10 @@ design, code, review and testing. The rules they follow are in [`CLAUDE.md`](../
 4. **Research** — while delivery runs, ask `/research <question>` or just think out loud in
    a research session. Notes land in `docs/research/`; good ideas become backlog items.
 5. **Check in** — `/status` shows what is done, in flight, blocked on you, and ready next.
+   For a visual board and the week's report, run `node tools/board.mjs --open` (kanban by
+   status, done/created this week, blocked on you, stale items, epic progress, activity feed).
+   `--week 2026-10-19` reports on an earlier week. It reads the backlog files and the *Log*
+   timestamps, writes `.board/index.html` (not committed), and needs only Node 18+.
 6. **Merge** — review the PR summary and QA report, then merge.
 
 ## In the Claude project (parallel threads)

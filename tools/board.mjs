@@ -184,7 +184,7 @@ function card(i, a, now) {
   ].join('');
   return `<article class="card" data-kind="${esc(i.kind)}" data-priority="${esc(i.priority)}">
   <div class="row"><span class="id">${esc(i.id)}</span><span class="kind k-${esc(i.kind)}">${esc(i.kind || '?')}</span><span class="prio p-${esc(i.priority)}">${esc(i.priority)}</span></div>
-  <div class="title">${esc(i.title)}</div>
+  <div class="title" title="${esc(i.title)}">${esc(i.title)}</div>
   <div class="meta">${i.owner ? `owner: ${esc(i.owner)}` : ''}${i.parent ? ` · parent ${esc(i.parent)}` : ''}${i.criteria ? ` · ${i.criteria} criteria` : ''}${i.pr ? ` · <a href="${esc(i.pr)}">PR</a>` : ''}</div>
   ${flags ? `<div class="flags">${flags}</div>` : ''}
 </article>`;
@@ -195,12 +195,13 @@ function html(items, a, weekStart, weekEnd, now) {
   const done = items.filter((i) => i.status === 'done').length;
   const pct = items.length ? Math.round((done / items.length) * 100) : 0;
   const mini = (arr, extra = () => '') => arr.length
-    ? `<ul>${arr.map((i) => `<li><span class="id">${esc(i.id)}</span> <span class="kind k-${esc(i.kind)}">${esc(i.kind)}</span> ${esc(i.title)}${extra(i)}</li>`).join('')}</ul>`
+    ? `<ul class="pg" data-size="10">${arr.map((i) => `<li><span class="id">${esc(i.id)}</span> <span class="kind k-${esc(i.kind)}">${esc(i.kind)}</span> ${esc(i.title)}${extra(i)}</li>`).join('')}</ul>`
     : '<p class="none">none</p>';
 
-  const columns = STATUSES.map((s) => {
-    const col = items.filter((i) => i.status === s).sort((x, y) => x.priority.localeCompare(y.priority) || x.id.localeCompare(y.id));
-    return `<section class="col"><h3>${s} <span class="count">${col.length}</span></h3>${col.map((i) => card(i, a, now)).join('') || '<p class="none">empty</p>'}</section>`;
+  const sorted = (st) => items.filter((i) => i.status === st).sort((x, y) => x.priority.localeCompare(y.priority) || x.id.localeCompare(y.id));
+  const columns = STATUSES.map((st) => {
+    const col = sorted(st);
+    return `<section class="col"><header><h3>${st} <span class="count">${col.length}</span></h3><div class="pager"></div></header><div class="cards pg" data-size="10">${col.map((i) => card(i, a, now)).join('') || '<p class="none">empty</p>'}</div></section>`;
   }).join('');
 
   const epics = a.epics.length
@@ -211,7 +212,7 @@ function html(items, a, weekStart, weekEnd, now) {
     : '<p class="none">no parent/child items yet</p>';
 
   const feed = a.events.length
-    ? `<ul class="feed">${a.events.map((e) => `<li><time>${esc(fmtStamp(e))}</time> <span class="id">${esc(e.item.id)}</span> <b>${esc(e.role)}</b> ${esc(e.text)}</li>`).join('')}</ul>`
+    ? `<ul class="feed pg" data-size="10">${a.events.map((e) => `<li><time>${esc(fmtStamp(e))}</time> <span class="id">${esc(e.item.id)}</span> <b>${esc(e.role)}</b> ${esc(e.text)}</li>`).join('')}</ul>`
     : '<p class="none">no activity logged this week</p>';
 
   return `<!doctype html>
@@ -232,16 +233,22 @@ h1{font-size:20px;margin:0}h2{font-size:15px;margin:0 0 8px}h3{font-size:12px;te
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px 14px}
 .panel ul{margin:0;padding-left:18px}.panel li{margin:3px 0}
 .none{color:var(--muted);margin:0;font-style:italic}
-.board{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(230px,1fr);gap:10px;overflow-x:auto;padding-bottom:8px}
-.col{background:color-mix(in srgb,var(--panel) 55%,var(--bg));border:1px solid var(--line);border-radius:8px;padding:10px;min-height:120px}
+.board{display:grid;grid-template-columns:repeat(7,minmax(165px,1fr));gap:8px;overflow-x:auto;padding-bottom:8px;align-items:start}
+.col{background:color-mix(in srgb,var(--panel) 55%,var(--bg));border:1px solid var(--line);border-radius:8px;padding:8px;min-width:0}
+.col header{display:flex;align-items:center;justify-content:space-between;gap:4px;margin-bottom:8px}.col h3{margin:0}
+.cards{display:flex;flex-direction:column;gap:6px}
+.pager{display:inline-flex;align-items:center;gap:4px;color:var(--muted);font-size:11px;white-space:nowrap}
+.pager button{background:none;color:var(--text);border:1px solid var(--line);border-radius:4px;width:20px;height:20px;line-height:1;padding:0;cursor:pointer}.pager button:disabled{opacity:.35;cursor:default}
+ul + .pager{display:flex;justify-content:flex-end;margin-top:6px}
+.panel ul.pg{list-style:none;padding-left:0}.panel li{overflow-wrap:anywhere}
 .count{background:var(--line);border-radius:10px;padding:0 7px;margin-left:4px;color:var(--text)}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:8px 10px;margin-bottom:8px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:6px 10px;min-width:0}.card[hidden],.pager[hidden]{display:none}
 .row{display:flex;gap:6px;align-items:center}.id{font-family:ui-monospace,Consolas,monospace;font-size:12px;color:var(--muted)}
-.title{margin:4px 0;font-weight:600}.meta{color:var(--muted);font-size:12px}
+.title{margin:2px 0;font-weight:600;font-size:13px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.meta{color:var(--muted);font-size:12px}
 .kind,.prio{font-size:10px;font-weight:700;border-radius:4px;padding:1px 5px;border:1px solid var(--line)}
 .prio{margin-left:auto}.p-P0{color:var(--bad);border-color:var(--bad)}.p-P1{color:var(--warn);border-color:var(--warn)}
 .k-EPIC{color:#8e5bd6}.k-ARCH{color:#2f8f9d}.k-CODE{color:var(--accent)}.k-RESEARCH{color:#b8741a}.k-QA{color:var(--ok)}.k-BUG{color:var(--bad)}.k-DOCS{color:var(--muted)}
-.flags{margin-top:6px;display:flex;flex-wrap:wrap;gap:4px}.flag{font-size:11px;border-radius:4px;padding:1px 6px}
+.flags{margin-top:4px;display:flex;flex-wrap:wrap;gap:4px}.flag{font-size:11px;border-radius:4px;padding:1px 6px}
 .flag.bad{background:color-mix(in srgb,var(--bad) 15%,transparent);color:var(--bad)}.flag.warn{background:color-mix(in srgb,var(--warn) 15%,transparent);color:var(--warn)}
 .epic{margin-bottom:10px}.epic .bar{margin-top:4px}
 .feed{list-style:none;padding:0!important}.feed time{color:var(--muted);font-family:ui-monospace,Consolas,monospace;font-size:12px}
@@ -275,9 +282,27 @@ a{color:var(--accent)}
 <div class="filters" id="filters"><button data-k="" aria-pressed="true">All</button>${KINDS.map((k) => `<button data-k="${k}" aria-pressed="false">${k}</button>`).join('')}</div>
 <div class="board">${columns}</div>
 <script>
-const btns=[...document.querySelectorAll('#filters button')];
-btns.forEach(b=>b.onclick=()=>{btns.forEach(x=>x.setAttribute('aria-pressed',x===b));
-document.querySelectorAll('.card').forEach(c=>c.hidden=b.dataset.k&&c.dataset.kind!==b.dataset.k)});
+const kinds=[...document.querySelectorAll('#filters button')];
+let kind='';
+function paginate(box){
+  const size=+box.dataset.size||10;let page=0;
+  const all=[...box.children].filter(c=>c.tagName!=='P');
+  let bar=box.parentElement.querySelector(':scope > header .pager');
+  if(!bar){bar=document.createElement('div');bar.className='pager';box.after(bar)}
+  box.render=()=>{
+    const vis=all.filter(c=>!kind||!c.dataset.kind||c.dataset.kind===kind);
+    const pages=Math.max(1,Math.ceil(vis.length/size));page=Math.min(page,pages-1);
+    all.forEach(c=>c.hidden=true);
+    vis.slice(page*size,page*size+size).forEach(c=>c.hidden=false);
+    bar.hidden=pages<2;
+    bar.innerHTML='<button aria-label="Previous page" '+(page?'':'disabled')+' data-d="-1">&lsaquo;</button><span>'+(page+1)+'/'+pages+'</span><button aria-label="Next page" '+(page<pages-1?'':'disabled')+' data-d="1">&rsaquo;</button>';
+    bar.querySelectorAll('button').forEach(b=>b.onclick=()=>{page+=+b.dataset.d;box.render()});
+  };
+  box.render();
+}
+document.querySelectorAll('.pg').forEach(paginate);
+kinds.forEach(b=>b.onclick=()=>{kind=b.dataset.k;kinds.forEach(x=>x.setAttribute('aria-pressed',x===b));
+  document.querySelectorAll('.col .cards').forEach(c=>c.render())});
 </script>
 </main></body></html>`;
 }

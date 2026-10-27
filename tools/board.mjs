@@ -3,12 +3,13 @@
 //
 //   node tools/board.mjs                 text summary + writes .board/index.html
 //   node tools/board.mjs --open          ...and opens the page in the browser
+//   node tools/board.mjs --watch         keep running: regenerate on every backlog change, page reloads itself
 //   node tools/board.mjs --week 2026-10-19   report for the week containing that date
 //   node tools/board.mjs --dir <path> --out <file>   other backlog folder / output file
 //
 // No dependencies, Node 18+. This is team tooling, not part of the product.
 
-import { readFileSync, readdirSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
+import { readFileSync, readdirSync, writeFileSync, mkdirSync, existsSync, watch } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
@@ -24,6 +25,8 @@ const opt = (name) => {
 const backlogDir = resolve(opt('--dir') ?? join(root, 'docs', 'backlog'));
 const outFile = resolve(opt('--out') ?? join(root, '.board', 'index.html'));
 const STALE_DAYS = 3;
+const watching = args.includes('--watch');
+const versionFile = join(dirname(outFile), 'version.js');
 
 const STATUSES = ['idea', 'designed', 'ready', 'in-progress', 'in-review', 'in-qa', 'done'];
 const KINDS = ['EPIC', 'ARCH', 'CODE', 'RESEARCH', 'QA', 'BUG', 'DOCS'];
@@ -83,7 +86,7 @@ function loadItems(dir) {
     const { fm, body } = parsed;
     const sec = sections(body);
     const criteria = stripComments(sec['acceptance criteria'] ?? []).filter((l) => /^\s*\d+\./.test(l) && l.replace(/^\s*\d+\.\s*/, '').trim());
-    const questions = stripComments(sec['open questions'] ?? []).filter((l) => l.trim() && !/answered/i.test(l));
+    const questions = stripComments(sec['open questions'] ?? []).filter((l) => l.trim() && !/answered/i.test(l) && !/^\s*none\b/i.test(l));
     const log = parseLog(sec['log'] ?? []).sort((a, b) => a.at - b.at);
     items.push({
       file,
@@ -178,7 +181,7 @@ function textReport(items, a, weekStart, weekEnd, now) {
 function card(i, a, now) {
   const unmet = a.unmet(i);
   const flags = [
-    i.blocked || i.questions ? `<span class="flag bad">blocked${i.questions ? ` · ${i.questions} question${i.questions > 1 ? 's' : ''}` : ''}</span>` : '',
+    (i.blocked || i.questions) && i.status !== 'done' ? `<span class="flag bad">blocked${i.questions ? ` · ${i.questions} question${i.questions > 1 ? 's' : ''}` : ''}</span>` : '',
     unmet.length ? `<span class="flag warn">needs ${esc(unmet.join(', '))}</span>` : '',
     a.stale.includes(i) ? `<span class="flag warn">stale · ${esc(ago(i.lastActivity, now))}</span>` : '',
   ].join('');
@@ -190,7 +193,7 @@ function card(i, a, now) {
 </article>`;
 }
 
-function html(items, a, weekStart, weekEnd, now) {
+function html(items, a, weekStart, weekEnd, now, version) {
   const last = new Date(weekEnd.getFullYear(), weekEnd.getMonth(), weekEnd.getDate() - 1);
   const done = items.filter((i) => i.status === 'done').length;
   const pct = items.length ? Math.round((done / items.length) * 100) : 0;
@@ -256,7 +259,7 @@ ul + .pager{display:flex;justify-content:flex-end;margin-top:6px}
 .filters button[aria-pressed=true]{background:var(--accent);color:#fff;border-color:var(--accent)}
 a{color:var(--accent)}
 </style></head><body><main>
-<h1>Backlog board</h1>
+<h1>Backlog board${watching ? ' <span class="meta">· live</span>' : ''}</h1>
 <p class="sub">Week ${esc(fmtDate(weekStart))} to ${esc(fmtDate(last))} · generated ${esc(fmtDate(now))} ${pad(now.getHours())}:${pad(now.getMinutes())} from <code>${esc(backlogDir.replace(root, '.'))}</code></p>
 
 <div class="stats">
@@ -285,7 +288,7 @@ a{color:var(--accent)}
 const kinds=[...document.querySelectorAll('#filters button')];
 let kind='';
 function paginate(box){
-  const size=+box.dataset.size||10;let page=0;
+  const size=+box.dataset.size||10;const key='board.page.'+[...document.querySelectorAll('.pg')].indexOf(box);let page=0;try{page=+sessionStorage.getItem(key)||0}catch(e){}
   const all=[...box.children].filter(c=>c.tagName!=='P');
   let bar=box.parentElement.querySelector(':scope > header .pager');
   if(!bar){bar=document.createElement('div');bar.className='pager';box.after(bar)}
@@ -296,13 +299,18 @@ function paginate(box){
     vis.slice(page*size,page*size+size).forEach(c=>c.hidden=false);
     bar.hidden=pages<2;
     bar.innerHTML='<button aria-label="Previous page" '+(page?'':'disabled')+' data-d="-1">&lsaquo;</button><span>'+(page+1)+'/'+pages+'</span><button aria-label="Next page" '+(page<pages-1?'':'disabled')+' data-d="1">&rsaquo;</button>';
+    try{sessionStorage.setItem(key,page)}catch(e){}
     bar.querySelectorAll('button').forEach(b=>b.onclick=()=>{page+=+b.dataset.d;box.render()});
   };
   box.render();
 }
 document.querySelectorAll('.pg').forEach(paginate);
-kinds.forEach(b=>b.onclick=()=>{kind=b.dataset.k;kinds.forEach(x=>x.setAttribute('aria-pressed',x===b));
+try{kind=sessionStorage.getItem('board.kind')||'';kinds.forEach(x=>x.setAttribute('aria-pressed',x.dataset.k===kind));document.querySelectorAll('.col .cards').forEach(c=>c.render())}catch(e){}
+kinds.forEach(b=>b.onclick=()=>{kind=b.dataset.k;try{sessionStorage.setItem('board.kind',kind)}catch(e){}kinds.forEach(x=>x.setAttribute('aria-pressed',x===b));
   document.querySelectorAll('.col .cards').forEach(c=>c.render())});
+${watching ? `const mine=${JSON.stringify(version)};
+setInterval(()=>{const t=document.createElement('script');t.src='version.js?'+Date.now();
+t.onload=()=>{t.remove();if(window.__boardVersion&&window.__boardVersion!==mine)location.reload()};t.onerror=()=>t.remove();document.head.appendChild(t)},2000);` : ''}
 </script>
 </main></body></html>`;
 }
@@ -312,21 +320,38 @@ if (!existsSync(backlogDir)) {
   console.error(`Backlog folder not found: ${backlogDir}`);
   process.exit(1);
 }
-const now = new Date();
-const [weekStart, weekEnd] = weekBounds(opt('--week'));
-const items = loadItems(backlogDir);
-const analysis = analyse(items, weekStart, weekEnd, now);
 
-if (!items.length) {
-  console.log('No backlog items yet (expected docs/backlog/BL-NNNN-*.md). Run /groom to create some.');
+function build({ quiet = false } = {}) {
+  const now = new Date();
+  const [weekStart, weekEnd] = weekBounds(opt('--week'));
+  const items = loadItems(backlogDir);
+  const analysis = analyse(items, weekStart, weekEnd, now);
+  const version = String(now.getTime());
+
+  if (!items.length) {
+    console.log('No backlog items yet (expected docs/backlog/BL-NNNN-*.md). Run /groom to create some.');
+  }
+  if (!quiet) console.log(textReport(items, analysis, weekStart, weekEnd, now));
+
+  mkdirSync(dirname(outFile), { recursive: true });
+  writeFileSync(outFile, html(items, analysis, weekStart, weekEnd, now, version));
+  if (watching) writeFileSync(versionFile, `window.__boardVersion=${JSON.stringify(version)};
+`);
+  console.log(`${quiet ? `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())} ` : ''}Board written to ${outFile}`);
 }
-console.log(textReport(items, analysis, weekStart, weekEnd, now));
 
-mkdirSync(dirname(outFile), { recursive: true });
-writeFileSync(outFile, html(items, analysis, weekStart, weekEnd, now));
-console.log(`Board written to ${outFile}`);
+build();
 
 if (args.includes('--open')) {
   const cmd = process.platform === 'win32' ? ['cmd', ['/c', 'start', '', outFile]] : process.platform === 'darwin' ? ['open', [outFile]] : ['xdg-open', [outFile]];
   spawn(cmd[0], cmd[1], { detached: true, stdio: 'ignore' }).unref();
+}
+
+if (watching) {
+  let timer;
+  watch(backlogDir, () => {
+    clearTimeout(timer);
+    timer = setTimeout(() => { try { build({ quiet: true }); } catch (e) { console.error(`rebuild failed: ${e.message}`); } }, 300);
+  });
+  console.log(`Watching ${backlogDir} (Ctrl+C to stop)`);
 }

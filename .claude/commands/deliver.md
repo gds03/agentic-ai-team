@@ -26,3 +26,6 @@ subagent with the Agent tool, passing the item file path and the previous step's
    back through **reviewer** and **qa** (again max 2 rounds).
 6. Report: final status, PR link, the QA result per acceptance criterion, any new items or
    open questions created. Merging is the product owner's call.
+
+Parallel runs: if the product owner asked for several items at once, follow "Parallel delivery" in
+CLAUDE.md: every agent for an item works in that item's own worktree, branched from `origin/main`.

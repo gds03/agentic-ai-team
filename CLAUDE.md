@@ -76,6 +76,14 @@ Several sessions can run in parallel (e.g. one per item, plus research sessions)
 conflicts, **one session owns one item at a time** and only edits that item's file and
 the code the item covers.
 
+**Parallel delivery.** When asked to deliver several items at once (e.g. "deliver A and B in
+parallel"), check first that none depends on another, run each pre-flight and wait for the product
+owner's yes on each, then give every item its own git worktree (`isolation: "worktree"` on the
+Agent call) and its own branch created from `origin/main` (`git fetch && git checkout -b
+bl-NNNN-slug origin/main`), never from the branch that happens to be checked out. The developer,
+reviewer and QA of one item all work on that item's branch; nothing is shared between items except
+`origin`. The second PR to merge may need a rebase, which its developer does.
+
 ## Conventions
 
 - **IDs**: backlog items `BL-NNNN`, ADRs `ADR-NNNN`. Take the next free number.

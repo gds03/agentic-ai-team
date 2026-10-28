@@ -18,6 +18,9 @@ design, code, review and testing. The rules they follow are in [`CLAUDE.md`](../
    status, done/created this week, blocked on you, stale items, epic progress, activity feed).
    `--week 2026-10-19` reports on an earlier week. It reads the backlog files and the *Log*
    timestamps, writes `.board/index.html` (not committed), and needs only Node 18+.
+   To *read* the documents themselves, run `node tools/docs.mjs --open`: a viewer with one
+   dropdown each for backlog, specs, ADRs and research (plus other docs). New and edited
+   files appear on their own, and links between `.md` files open inside the viewer.
 6. **Merge** — review the PR summary and QA report, then merge.
 
 ## In the Claude project (parallel threads)

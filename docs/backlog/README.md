@@ -34,6 +34,17 @@ Rules:
 The board is derived, not maintained: run `/status` to have the scrum master summarise
 items by status, what is blocked, and what can start next.
 
+## Worktrees on the board
+
+Agents work in parallel git worktrees, so their item files differ from `main`. `node tools/board.mjs`
+reads `git worktree list` (no frontmatter field needed) and loads this folder from every worktree. The
+first worktree is the base; for every other worktree the item files its branch changed (committed or
+not) override the base copy, and items that exist only there are added. Cards show the branch, an
+"uncommitted" marker and a flag when the branch status differs from `main` (for example done on the
+branch, designed on main until the PR merges). The "In flight by worktree" panel lists each worktree.
+So agents must keep an item's `status` and *Log* current in their own worktree. `--dir` reads one
+folder only.
+
 ## Frontmatter fields
 
 | Field | Values | Notes |

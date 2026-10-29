@@ -279,13 +279,13 @@ function html(items, a, weekStart, weekEnd, now, version, wts) {
   const done = items.filter((i) => i.status === 'done').length;
   const pct = items.length ? Math.round((done / items.length) * 100) : 0;
   const mini = (arr, extra = () => '') => arr.length
-    ? `<ul class="pg" data-size="10">${arr.map((i) => `<li><span class="id">${esc(i.id)}</span> <span class="kind k-${esc(i.kind)}">${esc(i.kind)}</span> ${esc(i.title)}${extra(i)}</li>`).join('')}</ul>`
+    ? `<ul class="pg" data-size="6">${arr.map((i) => `<li><span class="id">${esc(i.id)}</span> <span class="kind k-${esc(i.kind)}">${esc(i.kind)}</span> ${esc(i.title)}${extra(i)}</li>`).join('')}</ul>`
     : '<p class="none">none</p>';
 
   const sorted = (st) => items.filter((i) => i.status === st).sort((x, y) => x.priority.localeCompare(y.priority) || x.id.localeCompare(y.id));
   const columns = STATUSES.map((st) => {
     const col = sorted(st);
-    return `<section class="col"><header><h3>${st} <span class="count">${col.length}</span></h3><div class="pager"></div></header><div class="cards pg" data-size="10">${col.map((i) => card(i, a, now)).join('') || '<p class="none">empty</p>'}</div></section>`;
+    return `<section class="col"><header><h3>${st} <span class="count">${col.length}</span></h3><div class="pager"></div></header><div class="cards pg" data-size="8">${col.map((i) => card(i, a, now)).join('') || '<p class="none">empty</p>'}</div></section>`;
   }).join('');
 
   const epics = a.epics.length
@@ -296,7 +296,7 @@ function html(items, a, weekStart, weekEnd, now, version, wts) {
     : '<p class="none">no parent/child items yet</p>';
 
   const feed = a.events.length
-    ? `<ul class="feed pg" data-size="10">${a.events.map((e) => `<li><time>${esc(fmtStamp(e))}</time> <span class="id">${esc(e.item.id)}</span> <b>${esc(e.role)}</b> ${esc(e.text)}</li>`).join('')}</ul>`
+    ? `<ul class="feed pg" data-size="10">${a.events.map((e) => `<li title="${esc(`${e.item.id} ${e.role}: ${e.text}`)}"><time>${esc(fmtStamp(e))}</time> <span class="id">${esc(e.item.id)}</span> <b>${esc(e.role)}</b> ${esc(e.text)}</li>`).join('')}</ul>`
     : '<p class="none">no activity logged this week</p>';
 
   return `<!doctype html>
@@ -326,17 +326,17 @@ h1{font-size:20px;margin:0}h2{font-size:15px;margin:0 0 8px}h3{font-size:12px;te
 ul + .pager{display:flex;justify-content:flex-end;margin-top:6px}
 .panel ul.pg{list-style:none;padding-left:0}.panel li{overflow-wrap:anywhere}
 .count{background:var(--line);border-radius:10px;padding:0 7px;margin-left:4px;color:var(--text)}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:6px 10px;min-width:0}.card[hidden],.pager[hidden]{display:none}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:4px 8px;min-width:0}.card[hidden],.pager[hidden]{display:none}
 .row{display:flex;gap:6px;align-items:center}.id{font-family:ui-monospace,Consolas,monospace;font-size:12px;color:var(--muted)}
-.title{margin:2px 0;font-weight:600;font-size:13px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.meta{color:var(--muted);font-size:12px}
+.title{margin:1px 0;font-weight:600;font-size:12.5px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.meta{color:var(--muted);font-size:12px}.card .meta{font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .kind,.prio{font-size:10px;font-weight:700;border-radius:4px;padding:1px 5px;border:1px solid var(--line)}
 .prio{margin-left:auto}.p-P0{color:var(--bad);border-color:var(--bad)}.p-P1{color:var(--warn);border-color:var(--warn)}
 .k-EPIC{color:#8e5bd6}.k-ARCH{color:#2f8f9d}.k-CODE{color:var(--accent)}.k-RESEARCH{color:#b8741a}.k-QA{color:var(--ok)}.k-BUG{color:var(--bad)}.k-DOCS{color:var(--muted)}
-.flags{margin-top:4px;display:flex;flex-wrap:wrap;gap:4px}.flag{font-size:11px;border-radius:4px;padding:1px 6px}
+.flags{margin-top:2px;display:flex;flex-wrap:wrap;gap:3px}.flag{font-size:10px;border-radius:4px;padding:0 5px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .flag.bad{background:color-mix(in srgb,var(--bad) 15%,transparent);color:var(--bad)}.flag.warn{background:color-mix(in srgb,var(--warn) 15%,transparent);color:var(--warn)}
 .flag.wt{background:color-mix(in srgb,var(--accent) 15%,transparent);color:var(--accent)}.wt{margin-bottom:10px}.wt ul{margin-top:4px}
 .epic{margin-bottom:10px}.epic .bar{margin-top:4px}
-.feed{list-style:none;padding:0!important}.feed time{color:var(--muted);font-family:ui-monospace,Consolas,monospace;font-size:12px}
+.feed{list-style:none;padding:0!important}.feed li{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.feed time{color:var(--muted);font-family:ui-monospace,Consolas,monospace;font-size:12px}
 .filters{margin:0 0 10px;display:flex;gap:6px;flex-wrap:wrap}.filters button{background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:14px;padding:3px 11px;cursor:pointer}
 .filters button[aria-pressed=true]{background:var(--accent);color:#fff;border-color:var(--accent)}
 a{color:var(--accent)}

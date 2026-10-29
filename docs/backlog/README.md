@@ -48,8 +48,28 @@ items by status, what is blocked, and what can start next.
 | `parent` | ID or empty | For items split from a larger one |
 | `owner` | role currently holding it | e.g. `developer` |
 | `blocked` | `true` \| `false` | `true` when waiting on the product owner |
+| `qa` | `skip` \| `light` \| `full` | QA tier, see below. Missing or unclear means `full` |
 | `spec` | path or empty | e.g. `docs/specs/booking.md` |
 | `pr` | URL or empty | Set by the developer |
+
+## QA tier
+
+QA is the most expensive step, so how much of it an item gets is decided per item. The architect
+proposes the tier in the `qa` field, the product owner confirms it at `/deliver` pre-flight, and
+the reviewer may raise it (never lower it).
+
+| Tier | Use when | What happens in the `in-qa` step |
+|---|---|---|
+| `skip` | Docs, ADR, backlog or tooling changes; config tweaks; a change with no behaviour change | No QA. Reviewer approval plus a green build and tests closes the item. |
+| `light` | Small code change where every acceptance criterion is already covered by a named automated test | The orchestrator maps each criterion to its test and the reviewer's test run. No QA subagent. |
+| `full` | New endpoint or page, DB schema or migration, auth, public API shape, kit/booking boundary, or any criterion with no automated test | The `qa` agent, as before. |
+
+Rules:
+- When in doubt, `full`. A missing `qa` field is `full`.
+- `light` must be escalated to `full` if any criterion has no automated test, or a test it relies on
+  was changed in the PR without the reviewer noting why.
+- `BUG` items found by QA, and items touching auth, tenancy or money, are never below `light`.
+- Whoever closes a `skip` or `light` item logs the tier and the evidence per criterion in the *Log*.
 
 ## Sections
 

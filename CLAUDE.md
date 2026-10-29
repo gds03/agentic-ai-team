@@ -44,8 +44,12 @@ idea ──architect──▶ designed ──scrum-master──▶ ready ──d
   tests, runs the build and tests, and opens a PR titled `[BL-NNNN] <title>`.
 - **in-review → in-qa**: the reviewer approves, or sends it back to `in-progress` with
   concrete findings recorded in the item's *Log*.
-- **in-qa → done**: QA verifies every acceptance criterion, adds integration tests where
-  useful, and marks it done. A failure goes back to `in-progress` with a reproduction;
+- **in-qa → done**: depends on the item's `qa` tier (`skip` | `light` | `full`, set by the
+  architect, confirmed by the product owner at pre-flight, raisable but never lowerable by the
+  reviewer; rules in [`docs/backlog/README.md`](docs/backlog/README.md)). For `full`, QA
+  verifies every acceptance criterion, adds integration tests where useful, and marks it done.
+  For `light` the orchestrator checks each criterion against a named passing automated test;
+  for `skip` reviewer approval plus green build and tests is enough. Both log their evidence. A failure goes back to `in-progress` with a reproduction;
   a bug outside the item's scope becomes a new item with `type: bug`.
 - **Merging** to `main` is the product owner's call unless they have said otherwise.
 
@@ -103,8 +107,8 @@ reviewer and QA of one item all work on that item's branch; nothing is shared be
 - **Commits**: imperative mood, prefix with the item ID, e.g. `BL-0007: add booking slot validation`.
 - **One item per PR.** The PR body links the item file and lists how each acceptance
   criterion is covered.
-- **Definition of done**: code builds, all tests pass, reviewer approved, QA verified every
-  acceptance criterion, docs/specs updated if behaviour changed, item status `done`.
+- **Definition of done**: code builds, all tests pass, reviewer approved, every
+  acceptance criterion verified at the item's QA tier, docs/specs updated if behaviour changed, item status `done`.
 - **Tests**: developers write unit tests with the code; QA owns acceptance, integration and
   end-to-end tests. Never skip, disable or delete a failing test to get green.
 - **Architecture**: the application is built as **vertical slices**. Each use case

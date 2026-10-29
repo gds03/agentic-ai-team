@@ -24,7 +24,11 @@ Read `CLAUDE.md` first.
    - **Security**: input validation, authz checks, secrets, injection.
    - **Maintainability**: naming, duplication, consistency with the codebase. Only flag what matters.
 4. Write the verdict:
-   - **Approved**: set `status: in-qa`, `owner: qa`.
+   - **Approved**: set `status: in-qa`, `owner: qa` (for a `skip` or `light` item the
+     orchestrator closes it instead, but the status is the same).
+   - Also judge the item's `qa` tier. You may raise it (e.g. `light` to `full` because a
+     criterion has no automated test, or the change touches auth or a schema), never lower it.
+     For `light`, name in the *Log* which test covers each criterion.
    - **Changes requested**: set `status: in-progress`, `owner: developer`.
    Append a *Log* line, and list findings as `file:line — problem — suggested fix`,
    each marked **must-fix** or **nit**. Only must-fix items block approval.

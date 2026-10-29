@@ -33,6 +33,9 @@ implement without guessing, and that QA can verify.
    Name every other new item `BL-NNNN-KIND-short-slug.md` and set the matching `kind` (see
    `docs/backlog/README.md`): `ARCH` for contract/ADR work, `CODE` for a slice, `QA` for
    integration/e2e work, `RESEARCH` for a spike. If you change an item's kind, `git mv` it.
+   Set the item's `qa:` tier (`skip` | `light` | `full`, rules in `docs/backlog/README.md`)
+   and write criteria so each is testable by a named automated test; that is what makes
+   `light` possible. Default to `full` when unsure.
 7. Put anything that needs a product decision under **Open questions** and set
    `blocked: true`. Do not invent product behaviour.
 8. Set `status: designed`, `owner: scrum-master`, and append a *Log* line.

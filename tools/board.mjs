@@ -7,12 +7,16 @@
 //   node tools/board.mjs --week 2026-10-19   report for the week containing that date
 //   node tools/board.mjs --dir <path> --out <file>   other backlog folder / output file
 //
+// Work in progress in other git worktrees is picked up too: for every worktree of this repo the
+// item files that branch changed (committed or not) override the first worktree's copy. Pass
+// --dir to read one folder only and skip that.
+//
 // No dependencies, Node 18+. This is team tooling, not part of the product.
 
 import { readFileSync, readdirSync, writeFileSync, mkdirSync, existsSync, watch } from 'node:fs';
-import { dirname, join, resolve } from 'node:path';
+import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { spawn } from 'node:child_process';
+import { spawn, execFileSync } from 'node:child_process';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -77,10 +81,11 @@ function parseLog(lines) {
   return events;
 }
 
-function loadItems(dir) {
+function loadItems(dir, only) {
   const items = [];
   for (const file of readdirSync(dir).sort()) {
     if (!/^BL-\d{4}.*\.md$/.test(file)) continue; // skips README.md and _template.md
+    if (only && !only.has(file)) continue;
     const parsed = parseFrontmatter(readFileSync(join(dir, file), 'utf8'));
     if (!parsed) continue;
     const { fm, body } = parsed;
@@ -109,6 +114,69 @@ function loadItems(dir) {
     });
   }
   return items;
+}
+
+// ---------- worktrees ----------
+const git = (cwd, ...a) => execFileSync('git', a, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
+const lines = (s) => s.split(/\r?\n/).filter(Boolean);
+
+function listWorktrees() {
+  if (opt('--dir')) return [];
+  try {
+    return git(root, 'worktree', 'list', '--porcelain').split(/\r?\n\r?\n/).map((block) => {
+      const path = block.match(/^worktree (.+)$/m)?.[1];
+      if (!path || /^bare$/m.test(block)) return null;
+      return { path: resolve(path), branch: block.match(/^branch refs\/heads\/(.+)$/m)?.[1] ?? '(detached)', head: block.match(/^HEAD (\w+)$/m)?.[1] };
+    }).filter(Boolean);
+  } catch {
+    return []; // not a git repository
+  }
+}
+
+// Backlog files a worktree changed relative to the base: committed since the merge base, edited, or new.
+function changedFiles(wt, base, rel) {
+  let from = null;
+  try { from = git(wt.path, 'merge-base', 'HEAD', base.head); } catch { /* unrelated history: take every file */ }
+  const names = new Set();
+  if (from) {
+    for (const f of [...lines(git(wt.path, 'diff', '--name-only', from, '--', rel)), ...lines(git(wt.path, 'ls-files', '--others', '--exclude-standard', '--', rel))]) names.add(f.split('/').pop());
+  }
+  return from ? names : null;
+}
+
+// Items from the base backlog, overridden by what each other worktree is changing.
+function loadAll() {
+  const wts = listWorktrees();
+  const rel = relative(root, backlogDir);
+  if (wts.length < 2) return { items: loadItems(backlogDir), wts: [] };
+  const [base, ...others] = wts;
+  const items = loadItems(join(base.path, rel));
+  const byIdMap = new Map(items.map((i) => [i.id, i]));
+  const out = [];
+  for (const wt of others) {
+    const dir = join(wt.path, rel);
+    let dirty = false;
+    try { dirty = git(wt.path, 'status', '--porcelain') !== ''; } catch { /* worktree gone */ }
+    const info = { path: wt.path, branch: wt.branch, dirty, items: [] };
+    out.push(info);
+    if (!existsSync(dir)) continue;
+    let only;
+    try { only = changedFiles(wt, base, rel); } catch { only = null; }
+    for (const item of loadItems(dir, only ?? undefined)) {
+      const main = byIdMap.get(item.id);
+      if (main?.worktree) main.conflict = [...(main.conflict ?? []), wt.branch]; // two worktrees on one item
+      else {
+        item.worktree = info;
+        item.mainStatus = main?.status ?? null;
+        if (main) items.splice(items.indexOf(main), 1, item);
+        else items.push(item);
+        byIdMap.set(item.id, item);
+        info.items.push(item);
+      }
+    }
+  }
+  items.sort((x, y) => x.file.localeCompare(y.file));
+  return { items, wts: out };
 }
 
 // ---------- analysis ----------
@@ -178,12 +246,17 @@ function textReport(items, a, weekStart, weekEnd, now) {
 }
 
 // ---------- html ----------
+const drift = (i) => !i.worktree ? '' : i.mainStatus === null ? 'new on branch' : i.mainStatus !== i.status ? `${i.status} on branch, ${i.mainStatus} on main` : '';
+
 function card(i, a, now) {
   const unmet = a.unmet(i);
   const flags = [
     (i.blocked || i.questions) && i.status !== 'done' ? `<span class="flag bad">blocked${i.questions ? ` · ${i.questions} question${i.questions > 1 ? 's' : ''}` : ''}</span>` : '',
     unmet.length ? `<span class="flag warn">needs ${esc(unmet.join(', '))}</span>` : '',
     a.stale.includes(i) ? `<span class="flag warn">stale · ${esc(ago(i.lastActivity, now))}</span>` : '',
+    i.worktree ? `<span class="flag wt" title="${esc(i.worktree.path)}">⎇ ${esc(i.worktree.branch)}${i.worktree.dirty ? ' · ● uncommitted' : ''}</span>` : '',
+    drift(i) ? `<span class="flag warn">${esc(drift(i))}</span>` : '',
+    i.conflict ? `<span class="flag bad">also in ${esc(i.conflict.join(', '))}</span>` : '',
   ].join('');
   return `<article class="card" data-kind="${esc(i.kind)}" data-priority="${esc(i.priority)}">
   <div class="row"><span class="id">${esc(i.id)}</span><span class="kind k-${esc(i.kind)}">${esc(i.kind || '?')}</span><span class="prio p-${esc(i.priority)}">${esc(i.priority)}</span></div>
@@ -193,7 +266,15 @@ function card(i, a, now) {
 </article>`;
 }
 
-function html(items, a, weekStart, weekEnd, now, version) {
+function wtPanel(wts) {
+  if (!wts.length) return '<p class="none">no other worktrees</p>';
+  return wts.map((w) => `<div class="wt"><b>⎇ ${esc(w.branch)}</b>${w.dirty ? ' <span class="flag warn">● uncommitted</span>' : ''}<div class="meta">${esc(w.path)}</div>${
+    w.items.length
+      ? `<ul>${w.items.map((i) => `<li><span class="id">${esc(i.id)}</span> ${esc(i.title)} <span class="meta">(${esc(i.status)}${i.log.length ? ` · ${esc(i.log[i.log.length - 1].role)}: ${esc(i.log[i.log.length - 1].text.slice(0, 90))}` : ''})</span></li>`).join('')}</ul>`
+      : '<div class="meta">no backlog changes yet</div>'}</div>`).join('');
+}
+
+function html(items, a, weekStart, weekEnd, now, version, wts) {
   const last = new Date(weekEnd.getFullYear(), weekEnd.getMonth(), weekEnd.getDate() - 1);
   const done = items.filter((i) => i.status === 'done').length;
   const pct = items.length ? Math.round((done / items.length) * 100) : 0;
@@ -253,6 +334,7 @@ ul + .pager{display:flex;justify-content:flex-end;margin-top:6px}
 .k-EPIC{color:#8e5bd6}.k-ARCH{color:#2f8f9d}.k-CODE{color:var(--accent)}.k-RESEARCH{color:#b8741a}.k-QA{color:var(--ok)}.k-BUG{color:var(--bad)}.k-DOCS{color:var(--muted)}
 .flags{margin-top:4px;display:flex;flex-wrap:wrap;gap:4px}.flag{font-size:11px;border-radius:4px;padding:1px 6px}
 .flag.bad{background:color-mix(in srgb,var(--bad) 15%,transparent);color:var(--bad)}.flag.warn{background:color-mix(in srgb,var(--warn) 15%,transparent);color:var(--warn)}
+.flag.wt{background:color-mix(in srgb,var(--accent) 15%,transparent);color:var(--accent)}.wt{margin-bottom:10px}.wt ul{margin-top:4px}
 .epic{margin-bottom:10px}.epic .bar{margin-top:4px}
 .feed{list-style:none;padding:0!important}.feed time{color:var(--muted);font-family:ui-monospace,Consolas,monospace;font-size:12px}
 .filters{margin:0 0 10px;display:flex;gap:6px;flex-wrap:wrap}.filters button{background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:14px;padding:3px 11px;cursor:pointer}
@@ -273,6 +355,7 @@ a{color:var(--accent)}
 </div>
 
 <div class="grid">
+  <section class="panel"><h2>In flight by worktree</h2>${wtPanel(wts)}</section>
   <section class="panel"><h2>Needs the product owner</h2>${mini(a.blocked, (i) => (i.questions ? ` <span class="meta">(${i.questions} open question${i.questions > 1 ? 's' : ''})</span>` : ''))}</section>
   <section class="panel"><h2>Can start now</h2>${mini(a.startable)}</section>
   <section class="panel"><h2>Waiting on dependencies</h2>${mini(a.waiting, (i) => ` <span class="meta">(needs ${esc(a.unmet(i).join(', '))})</span>`)}</section>
@@ -324,7 +407,7 @@ if (!existsSync(backlogDir)) {
 function build({ quiet = false } = {}) {
   const now = new Date();
   const [weekStart, weekEnd] = weekBounds(opt('--week'));
-  const items = loadItems(backlogDir);
+  const { items, wts } = loadAll();
   const analysis = analyse(items, weekStart, weekEnd, now);
   const version = String(now.getTime());
 
@@ -334,7 +417,7 @@ function build({ quiet = false } = {}) {
   if (!quiet) console.log(textReport(items, analysis, weekStart, weekEnd, now));
 
   mkdirSync(dirname(outFile), { recursive: true });
-  writeFileSync(outFile, html(items, analysis, weekStart, weekEnd, now, version));
+  writeFileSync(outFile, html(items, analysis, weekStart, weekEnd, now, version, wts));
   if (watching) writeFileSync(versionFile, `window.__boardVersion=${JSON.stringify(version)};
 `);
   console.log(`${quiet ? `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())} ` : ''}Board written to ${outFile}`);
@@ -349,9 +432,29 @@ if (args.includes('--open')) {
 
 if (watching) {
   let timer;
-  watch(backlogDir, () => {
+  const rebuild = () => {
     clearTimeout(timer);
     timer = setTimeout(() => { try { build({ quiet: true }); } catch (e) { console.error(`rebuild failed: ${e.message}`); } }, 300);
-  });
-  console.log(`Watching ${backlogDir} (Ctrl+C to stop)`);
+  };
+  const rel = relative(root, backlogDir);
+  const watchers = new Map();
+  // Worktrees come and go and their commits/dirty state change without touching the backlog folder,
+  // so re-scan them every few seconds and rebuild when the picture changed.
+  const signature = () => JSON.stringify(listWorktrees().map((w) => [w.path, w.branch, w.head, (() => { try { return git(w.path, 'status', '--porcelain'); } catch { return ''; } })()]));
+  const syncWatchers = () => {
+    const dirs = new Set(listWorktrees().map((w) => join(w.path, rel)).filter(existsSync));
+    if (!dirs.size) dirs.add(backlogDir);
+    for (const [d, w] of watchers) if (!dirs.has(d)) { w.close(); watchers.delete(d); }
+    for (const d of dirs) if (!watchers.has(d)) watchers.set(d, watch(d, rebuild));
+  };
+  syncWatchers();
+  let last = signature();
+  setInterval(() => {
+    const now = signature();
+    if (now === last) return;
+    last = now;
+    syncWatchers();
+    rebuild();
+  }, 5000);
+  console.log(`Watching ${[...watchers.keys()].join(', ')} (Ctrl+C to stop)`);
 }

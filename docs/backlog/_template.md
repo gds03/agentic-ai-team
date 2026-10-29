@@ -9,6 +9,7 @@ depends_on: []
 parent: 
 owner: architect
 blocked: false
+qa: full              # skip | light | full; set by the architect, confirmed at pre-flight; see docs/backlog/README.md
 spec: 
 pr: 
 ---

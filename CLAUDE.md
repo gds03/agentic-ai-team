@@ -73,7 +73,9 @@ until they say yes, every time. Then it runs the whole chain for one item inside
 session: architect (if not designed) → developer → reviewer → developer fixes (max 2 rounds) →
 qa → PR. The orchestrating session acts as scrum master: it hands each agent the item
 file path and the outputs of the previous step, and records each hand-off in the item's
-*Log*. Other commands: `/groom`, `/design`, `/implement`, `/review`, `/qa`, `/research`,
+*Log*. Once the PR is open, `/try BL-NNNN` (a helper, not an agent) launches the branch locally
+and gives the product owner a click-by-click test script. Other commands: `/groom`, `/design`,
+`/implement`, `/review`, `/qa`, `/research`,
 `/status` (see `.claude/commands/`).
 
 Several sessions can run in parallel (e.g. one per item, plus research sessions). To avoid

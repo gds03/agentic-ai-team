@@ -39,7 +39,13 @@ subagent with the Agent tool, passing the item file path and the previous step's
    <evidence per criterion>`, and say in the report that no QA agent ran.
 6. Report: final status, PR link, the QA result per acceptance criterion (and the QA tier
    used), any new items or open questions created, and any deviation from the criteria that
-   the product owner has not accepted yet. End with: "Test it by hand: `/try BL-NNNN`".
+   the product owner has not accepted yet. Add a **Cost** line: for every agent run of this
+   pipeline (resumed and failed runs included) its tokens and duration from its completion
+   notification (`subagent_tokens`, `duration_ms`), then the item total and the wall-clock time from
+   the first delegation to the report. State plainly that tokens are not the unit of the plan's
+   usage limit (which also depends on model and caching), that your own orchestration tokens are
+   not counted, and that a run cut short by a usage limit is undercounted, so the product owner
+   can compare the totals with their plan's usage screen. End with: "Test it by hand: `/try BL-NNNN`".
    Merging is the product owner's call.
 
 Parallel runs: if the product owner asked for several items at once, follow "Parallel delivery" in

@@ -21,7 +21,10 @@ subagent with the Agent tool, passing the item file path and the previous step's
    `done`. If not, stop and report what it is waiting on.
 2. If `status` is `idea`: run the **architect** agent. If it leaves open questions
    (`blocked: true`), stop and report the questions.
-3. Run the **developer** agent to implement and open the PR.
+3. Run the **developer** agent to implement and open the PR. As soon as the PR is open, tell
+   the product owner they can test it by hand now with `/try BL-NNNN` (it launches the branch and
+   writes the click-by-click script) while review and QA continue. Do not launch it yourself
+   unless they ask, and do not wait for them.
 4. Run the **reviewer** agent. If changes are requested, send the findings to the
    **developer**, then review again. Stop after 2 rounds and report if still not approved.
 5. Close the item according to its `qa` tier (the reviewer may have raised it; read the
@@ -35,7 +38,9 @@ subagent with the Agent tool, passing the item file path and the previous step's
    For `light` and `skip`, set `status: done`, append a *Log* line `scrum-master: QA <tier>,
    <evidence per criterion>`, and say in the report that no QA agent ran.
 6. Report: final status, PR link, the QA result per acceptance criterion (and the QA tier
-   used), any new items or open questions created. Merging is the product owner's call.
+   used), any new items or open questions created, and any deviation from the criteria that
+   the product owner has not accepted yet. End with: "Test it by hand: `/try BL-NNNN`".
+   Merging is the product owner's call.
 
 Parallel runs: if the product owner asked for several items at once, follow "Parallel delivery" in
 CLAUDE.md: every agent for an item works in that item's own worktree, branched from `origin/main`.

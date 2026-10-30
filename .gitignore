@@ -429,3 +429,6 @@ FodyWeavers.xsd
 
 # Generated backlog board (tools/board.mjs)
 .board/
+
+# Agent worktrees (one checkout per delivered item, created by the Agent tool)
+.claude/worktrees/

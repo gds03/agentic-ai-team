@@ -12,6 +12,9 @@ design, code, review and testing. The rules they follow are in [`CLAUDE.md`](../
 3. **Deliver** — `/deliver BL-NNNN` runs architect → developer → reviewer → QA for one item
    and ends with a PR. The pre-flight shows the item's QA tier (`skip`, `light` or `full`); change it
    there if you disagree. Run several at once for items that don't depend on each other.
+   Once the PR is open, `/try BL-NNNN` launches that branch locally and gives you a click-by-click
+   test script built from the acceptance criteria, so you can test by hand while review and QA
+   continue. It changes no code and merges nothing.
 4. **Research** — while delivery runs, ask `/research <question>` or just think out loud in
    a research session. Notes land in `docs/research/`; good ideas become backlog items.
 5. **Check in** — `/status` shows what is done, in flight, blocked on you, and ready next.

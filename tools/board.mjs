@@ -198,9 +198,13 @@ function analyse(items, weekStart, weekEnd, now) {
 
   const children = new Map();
   for (const i of items) if (i.parent) children.set(i.parent, [...(children.get(i.parent) ?? []), i]);
-  const epics = [...children.entries()]
-    .filter(([id]) => map.has(id))
-    .map(([id, kids]) => ({ parent: map.get(id), kids, done: kids.filter((k) => k.status === 'done').length }));
+  const epicIds = new Set([...children.keys()].filter((id) => map.has(id)));
+  for (const i of items) if (i.kind === 'EPIC') epicIds.add(i.id);
+  const epics = [...epicIds].sort()
+    .map((id) => {
+      const kids = (children.get(id) ?? []).slice().sort((x, y) => STATUSES.indexOf(x.status) - STATUSES.indexOf(y.status) || x.id.localeCompare(y.id));
+      return { parent: map.get(id), kids, done: kids.filter((k) => k.status === 'done').length };
+    });
 
   return { map, unmet, startable, blocked, waiting, stale, doneThisWeek, createdThisWeek, events, epics };
 }
@@ -290,10 +294,17 @@ function html(items, a, weekStart, weekEnd, now, version, wts) {
 
   const epics = a.epics.length
     ? a.epics.map((e) => {
-        const p = Math.round((e.done / e.kids.length) * 100);
-        return `<div class="epic"><div><span class="id">${esc(e.parent.id)}</span> ${esc(e.parent.title)} <span class="meta">${e.done}/${e.kids.length} done</span></div><div class="bar"><i style="width:${p}%"></i></div></div>`;
+        const n = e.kids.length;
+        const p = n ? Math.round((e.done / n) * 100) : 0;
+        const epicNeeds = a.unmet(e.parent);
+        const kids = e.kids.map((k) => {
+          const needs = a.unmet(k);
+          const flag = (k.blocked || k.questions) && k.status !== 'done' ? '<span class="flag bad">blocked</span>' : '';
+          return `<div class="kid s-${esc(k.status)}" title="${esc(k.title)}"><div class="row"><span class="id">${esc(k.id)}</span><span class="kind k-${esc(k.kind)}">${esc(k.kind)}</span><span class="st">${esc(k.status)}</span></div><div class="title">${esc(k.title)}</div>${needs.length || flag ? `<div class="flags">${flag}${needs.length ? `<span class="flag warn">needs ${esc(needs.join(', '))}</span>` : ''}</div>` : ''}</div>`;
+        }).join('') || '<p class="none">no child items yet</p>';
+        return `<article class="epiccard"><div class="row"><span class="id">${esc(e.parent.id)}</span><span class="kind k-EPIC">EPIC</span><span class="st">${esc(e.parent.status)}</span><span class="meta" style="margin-left:auto">${e.done}/${n} done</span></div><div class="title wrap">${esc(e.parent.title)}</div><div class="bar"><i style="width:${p}%"></i></div>${epicNeeds.length ? `<div class="flags"><span class="flag warn">epic needs ${esc(epicNeeds.join(', '))}</span></div>` : ''}<div class="kids">${kids}</div></article>`;
       }).join('')
-    : '<p class="none">no parent/child items yet</p>';
+    : '<p class="none">no epics yet</p>';
 
   const feed = a.events.length
     ? `<ul class="feed pg" data-size="10">${a.events.map((e) => `<li title="${esc(`${e.item.id} ${e.role}: ${e.text}`)}"><time>${esc(fmtStamp(e))}</time> <span class="id">${esc(e.item.id)}</span> <b>${esc(e.role)}</b> ${esc(e.text)}</li>`).join('')}</ul>`
@@ -335,7 +346,12 @@ ul + .pager{display:flex;justify-content:flex-end;margin-top:6px}
 .flags{margin-top:2px;display:flex;flex-wrap:wrap;gap:3px}.flag{font-size:10px;border-radius:4px;padding:0 5px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .flag.bad{background:color-mix(in srgb,var(--bad) 15%,transparent);color:var(--bad)}.flag.warn{background:color-mix(in srgb,var(--warn) 15%,transparent);color:var(--warn)}
 .flag.wt{background:color-mix(in srgb,var(--accent) 15%,transparent);color:var(--accent)}.wt{margin-bottom:10px}.wt ul{margin-top:4px}
-.epic{margin-bottom:10px}.epic .bar{margin-top:4px}
+.epics{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px;margin-bottom:20px;align-items:start}
+.epiccard{background:var(--panel);border:1px solid var(--line);border-top:3px solid #8e5bd6;border-radius:8px;padding:10px 12px}.epiccard .bar{margin:6px 0}
+.title.wrap{white-space:normal;font-size:14px}.kids{display:flex;flex-direction:column;gap:5px;margin-top:8px;max-height:340px;overflow-y:auto}
+.kid{border:1px solid var(--line);border-left:3px solid var(--muted);border-radius:5px;padding:3px 8px;background:color-mix(in srgb,var(--panel) 55%,var(--bg))}
+.kid.s-done{border-left-color:var(--ok);opacity:.75}.kid.s-in-progress,.kid.s-in-review,.kid.s-in-qa{border-left-color:var(--accent)}.kid.s-ready,.kid.s-designed{border-left-color:var(--warn)}
+.st{font-size:10px;color:var(--muted);margin-left:auto}.epiccard>.row .st{margin-left:0}
 .feed{list-style:none;padding:0!important}.feed li{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.feed time{color:var(--muted);font-family:ui-monospace,Consolas,monospace;font-size:12px}
 .filters{margin:0 0 10px;display:flex;gap:6px;flex-wrap:wrap}.filters button{background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:14px;padding:3px 11px;cursor:pointer}
 .filters button[aria-pressed=true]{background:var(--accent);color:#fff;border-color:var(--accent)}
@@ -360,9 +376,11 @@ a{color:var(--accent)}
   <section class="panel"><h2>Can start now</h2>${mini(a.startable)}</section>
   <section class="panel"><h2>Waiting on dependencies</h2>${mini(a.waiting, (i) => ` <span class="meta">(needs ${esc(a.unmet(i).join(', '))})</span>`)}</section>
   <section class="panel"><h2>Done this week</h2>${mini(a.doneThisWeek)}</section>
-  <section class="panel"><h2>Epic progress</h2>${epics}</section>
   <section class="panel"><h2>Activity this week</h2>${feed}</section>
 </div>
+
+<h2>Epics</h2>
+<div class="epics">${epics}</div>
 
 <h2>Board</h2>
 <div class="filters" id="filters"><button data-k="" aria-pressed="true">All</button>${KINDS.map((k) => `<button data-k="${k}" aria-pressed="false">${k}</button>`).join('')}</div>

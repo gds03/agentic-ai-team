@@ -27,7 +27,9 @@ implement without guessing, and that QA can verify.
    "add controllers").
 6. If the item is bigger than roughly one PR (about a day of focused work), split it into
    child items (`parent:` set, `depends_on` ordered so independent work can run in parallel)
-   and keep the parent as an epic (`kind: EPIC`).
+   and keep the parent as an epic (`kind: EPIC`). In the epic's *Design* write a **How the epic
+   gets delivered** section (stages, what runs in parallel, diagram, critical path, what needs the
+   product owner; format in `docs/backlog/README.md`), derived from the children's `depends_on`.
    Name a child item `BL-NNNN-BL-PPPP-KIND-short-slug.md` (own ID, then its parent's ID,
    e.g. `BL-0018-BL-0017-CODE-services-manage-services.md`) and set `parent:` to match.
    Name every other new item `BL-NNNN-KIND-short-slug.md` and set the matching `kind` (see

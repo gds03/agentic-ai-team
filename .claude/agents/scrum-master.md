@@ -28,6 +28,10 @@ Read every item's frontmatter and report:
 - **Can run in parallel**: ready items that touch different areas (different specs/code).
 - **Blocked**: what each is waiting on, and the exact question for the product owner.
 - **Needs the product owner**: proposed ADRs to accept, PRs to merge.
+- **Epics**: for each `EPIC`, check its *How the epic gets delivered* section exists and still matches
+  its children's `depends_on` (children, stages, critical path). If it is missing or has drifted,
+  fix the ordering yourself when only `depends_on` changed, otherwise send it to the architect, and
+  say so in the report.
 
 ## Rules
 

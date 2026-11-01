@@ -18,6 +18,9 @@ Implement exactly one backlog item.
    Follow existing patterns in the codebase over your own preferences.
    Build it as a **vertical slice** in `Features/<Area>/<UseCase>/` (endpoint/page,
    validation, handling, data access together); never use another slice's types.
+   Put data-only types (request/response records, DTOs) as nested types of one
+   `<UseCase>Data` holder class in `<UseCase>Data.cs`; types with logic get their own file
+   (see *Data carriers versus logic* in `CLAUDE.md`).
 4. Write unit tests alongside the code. Run the build and the full test suite (commands are
    in `CLAUDE.md`); everything must pass.
 5. Commit with `BL-NNNN: <imperative summary>`. Push, and open or update the PR titled

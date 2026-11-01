@@ -19,6 +19,9 @@ Read `CLAUDE.md` first.
    - **Design fit**: does it follow the spec, the contracts and accepted ADRs?
    - **Slice architecture**: new code lives in one `Features/<Area>/<UseCase>/` slice with
      its own tests; no layer-based folders, no reaching into another slice's types.
+   - **Data versus logic**: data-only types are nested in a `<UseCase>Data` holder (one file,
+     no logic in it); anything with behaviour has its own file. Flag a `*Data` holder that
+     contains logic, a logic class hidden inside a holder, and a file per DTO.
    - **Tests**: do unit tests cover the behaviour, including failure paths? Would they fail if
      the code were wrong?
    - **Security**: input validation, authz checks, secrets, injection.

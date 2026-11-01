@@ -122,6 +122,17 @@ reviewer and QA of one item all work on that item's branch; nothing is shared be
   (contracts, DbContext, infrastructure) and their area's `Shared` folder. Backlog items are
   written and split **per slice**, so one item is normally one slice, and the kit/booking
   boundary below still applies. Record the exact folder rules in an ADR.
+- **Data carriers versus logic** (so a reader can see at once which classes own logic): types
+  that only carry data (request and response records, DTOs, view models, event payloads,
+  options) are not given a file each. A slice keeps them together as nested types of one
+  holder class named `<UseCase>Data`, in `<UseCase>Data.cs` (for example `ForgotPasswordData`
+  containing the records `ForgotPasswordRequest` and `ForgotPasswordResponse`). A type that
+  owns behaviour (handler, validator, rule, service, endpoint, a record with decisions in its
+  methods) gets its own file named after the type, and does not live inside a data holder.
+  If a data type grows logic, it moves out to its own file. A file whose name ends in `Data`
+  therefore never holds logic; any other file may. Shared contract records follow the same
+  rule, with a holder named after the area, chosen in the spec. Apply it to new code and to
+  code you touch anyway; do not refactor untouched files for it.
 - **Decisions**: anything hard to reverse (framework, database, auth, public API shape)
   gets an ADR, status `proposed` until the product owner accepts it.
 

@@ -117,11 +117,14 @@ reviewer and QA of one item all work on that item's branch; nothing is shared be
   1. *One reason to change.* If a class's job cannot be said without "and", split it.
   2. *Behaviour lives in instances, not static classes.* Handlers, validators, rules,
      services and endpoints' logic are ordinary classes that receive their dependencies by
-     constructor injection. `static` is only for stateless helpers and extension methods that
-     decide nothing.
+     constructor injection. `static` is for pure functions (the result depends only on the
+     arguments: no I/O, clock, randomness, configuration or state) and for registration and
+     extension methods; never for code that reads or writes anything or holds state.
   3. *Depend on abstractions at real seams.* Use a small interface where behaviour varies or
-     is replaced in tests (clock, data access, external services, a family of rules). Do not
-     add an interface for a class with one implementation and no seam.
+     is replaced in tests (clock, a boundary another area uses, an external store or service,
+     a family of rules). Wrapping the project's own `DbContext` is not a seam when an ADR says
+     handlers use it directly. Do not add an interface for a class with one implementation
+     and no seam.
   4. *Extend by adding.* A new rule or handler is a new class registered in DI, not another
      branch in an existing one.
   5. *Small interfaces.* A consumer depends only on the members it uses.
@@ -140,14 +143,15 @@ reviewer and QA of one item all work on that item's branch; nothing is shared be
 - **Data carriers versus logic** (so a reader can see at once which classes own logic): types
   that only carry data (request and response records, DTOs, view models, event payloads,
   options) are not given a file each. A slice keeps them together as nested types of one
-  holder class named `<UseCase>Data`, in `<UseCase>Data.cs` (for example `ForgotPasswordData`
-  containing the records `ForgotPasswordRequest` and `ForgotPasswordResponse`). A type that
+  holder class named `<UseCase>Data`, in `<UseCase>Data.cs` (for example `ResetPasswordData`
+  containing the records `ResetPasswordRequest` and `ResetPasswordResult`). A type that
   owns behaviour (handler, validator, rule, service, endpoint, a record with decisions in its
   methods) gets its own file named after the type, and does not live inside a data holder.
   If a data type grows logic, it moves out to its own file. A file whose name ends in `Data`
-  therefore never holds logic; any other file may. Shared contract records follow the same
-  rule, with a holder named after the area, chosen in the spec. Apply it to new code and to
-  code you touch anyway; do not refactor untouched files for it.
+  therefore never holds logic, not even display formatting (labels and date formats belong to
+  the page); any other file may. Public kernel contracts and kernel options keep their own
+  files, because nesting them would rename public API. Apply it to new code and to code you
+  touch anyway; do not refactor untouched files for it.
 - **Decisions**: anything hard to reverse (framework, database, auth, public API shape)
   gets an ADR, status `proposed` until the product owner accepts it.
 

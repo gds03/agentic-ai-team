@@ -33,6 +33,10 @@ re-run tests, push, and hand back to the same role.
 
 ## Rules
 
+- Follow *Class design* in `CLAUDE.md`: one reason to change per class, behaviour in
+  injected instances rather than static classes, interfaces only at real seams, no `new`
+  of collaborators inside a class. If the spec asks for something that breaks these rules,
+  stop and say so instead of copying it.
 - Stay inside the item's scope. Anything else you notice goes in your summary as a
   suggested new item; do not fix it silently.
 - If the design is wrong or ambiguous, stop and say so instead of improvising; the

@@ -113,6 +113,21 @@ reviewer and QA of one item all work on that item's branch; nothing is shared be
   acceptance criterion verified at the item's QA tier, docs/specs updated if behaviour changed, item status `done`.
 - **Tests**: developers write unit tests with the code; QA owns acceptance, integration and
   end-to-end tests. Never skip, disable or delete a failing test to get green.
+- **Class design** (concrete rules; "SOLID" is the reason, these are the checks):
+  1. *One reason to change.* If a class's job cannot be said without "and", split it.
+  2. *Behaviour lives in instances, not static classes.* Handlers, validators, rules,
+     services and endpoints' logic are ordinary classes that receive their dependencies by
+     constructor injection. `static` is only for stateless helpers and extension methods that
+     decide nothing.
+  3. *Depend on abstractions at real seams.* Use a small interface where behaviour varies or
+     is replaced in tests (clock, data access, external services, a family of rules). Do not
+     add an interface for a class with one implementation and no seam.
+  4. *Extend by adding.* A new rule or handler is a new class registered in DI, not another
+     branch in an existing one.
+  5. *Small interfaces.* A consumer depends only on the members it uses.
+  6. *Never create a collaborator inside a class* with `new` (except plain values); receive it.
+  The architect names each class's single responsibility in the spec; the reviewer checks
+  these rules. Apply them to new code and to code you touch anyway.
 - **Architecture**: the application is built as **vertical slices**. Each use case
   (e.g. book an appointment, send a reminder, create a tenant) is one slice in
   `Features/<Area>/<UseCase>/` that owns its endpoint or page, request/response types,

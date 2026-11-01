@@ -26,6 +26,10 @@ Read `CLAUDE.md` first.
      the code were wrong?
    - **Security**: input validation, authz checks, secrets, injection.
    - **Maintainability**: naming, duplication, consistency with the codebase. Only flag what matters.
+   - **Class design** (`CLAUDE.md`): flag a class that does two jobs, a static class that
+     holds behaviour, a collaborator created with `new` inside a class, an interface with no
+     seam, a branch added where a new class belonged, and a consumer that depends on more
+     than it uses. Each is a finding with the class and the rule it breaks.
 4. Write the verdict:
    - **Approved**: set `status: in-qa`, `owner: qa` (for a `skip` or `light` item the
      orchestrator closes it instead, but the status is the same).

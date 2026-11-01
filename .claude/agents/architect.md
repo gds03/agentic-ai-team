@@ -25,6 +25,10 @@ implement without guessing, and that QA can verify.
    access, tests) in its own `Features/<Area>/<UseCase>/` folder. Name the slice folder in
    the item's *Design*. Do not create items per technical layer ("add repository",
    "add controllers").
+   For each class the item introduces, state its single responsibility in one line in the
+   spec, whether it is an instance with injected dependencies or a plain value, and which
+   real seam (if any) gets an interface; follow *Class design* in `CLAUDE.md`. Do not design
+   behaviour as static classes or as arrays of static functions.
 6. If the item is bigger than roughly one PR (about a day of focused work), split it into
    child items (`parent:` set, `depends_on` ordered so independent work can run in parallel)
    and keep the parent as an epic (`kind: EPIC`). In the epic's *Design* write a **How the epic

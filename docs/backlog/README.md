@@ -30,6 +30,29 @@ Rules:
   and update `kind`/`parent`; references use `BL-NNNN` so they stay valid.
 - Only direct children carry their parent's ID (one level, not the whole ancestry).
 - Split items follow the same rule: an `EPIC` is split into `ARCH`, `CODE`, `QA`... children.
+- Every `EPIC` has a **How the epic gets delivered** section in its *Design*, written by the
+  architect when it splits the epic and checked by the scrum master (see below).
+
+## How the epic gets delivered
+
+The product owner asks "in what order does this epic get built?" for every epic, and the answer is
+otherwise scattered over the children's `depends_on`. An epic's *Design* therefore carries a section
+named **How the epic gets delivered**, derived from the children's `depends_on`:
+
+- **Stages**: the children grouped in the order they can start, with what each stage delivers in
+  one line. Name items outside the epic that gate it (for example kernel or database items) and say
+  they are outside.
+- **Parallel and sequential**: which children run together and which wait, each with the reason
+  (a dependency, or the same files).
+- **Diagram**: a small text diagram of `depends_on`.
+- **Critical path**: the longest chain, and which stage has slack, so the owner can start gating
+  work early.
+- **Needs the product owner**: pre-flight confirmations, decisions and merges the stages wait for.
+
+Keep it to children and gating items; do not repeat their criteria. The architect writes it when it
+splits the epic. The scrum master checks it matches `depends_on` whenever it adds, splits, reorders
+or finishes a child, fixes it or sends it back to the architect if it has drifted, and reports a
+mismatch in `/status`.
 
 The board is derived, not maintained: run `/status` to have the scrum master summarise
 items by status, what is blocked, and what can start next.

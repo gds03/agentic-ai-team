@@ -90,6 +90,14 @@ bl-NNNN-slug origin/main`), never from the branch that happens to be checked out
 reviewer and QA of one item all work on that item's branch; nothing is shared between items except
 `origin`. The second PR to merge may need a rebase, which its developer does.
 
+**Cleanup after merge.** A merged PR leaves its worktree and local branch behind. The next time the
+product owner says an item is merged, or starts a new item, the orchestrator removes the finished
+ones: check that `git status` in the worktree is clean and that the branch is merged into
+`origin/main` (`git branch --merged origin/main`), then run `git worktree remove <path>` and
+`git branch -d <branch>`. Never remove a worktree with uncommitted changes or unpushed commits;
+report it instead. `git worktree prune` clears entries whose folder is gone. Remote branches are
+left to the product owner.
+
 ## Conventions
 
 - **IDs**: backlog items `BL-NNNN`, ADRs `ADR-NNNN`. Take the next free number.

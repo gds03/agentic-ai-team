@@ -29,6 +29,8 @@ implement without guessing, and that QA can verify.
    spec, whether it is an instance with injected dependencies or a plain value, and which
    real seam (if any) gets an interface; follow *Class design* in `CLAUDE.md`. Do not design
    behaviour as static classes or as arrays of static functions.
+   When a mechanism or feature needs three or more classes, add the class dependency diagram
+   and table described in *Dependency diagram* in `CLAUDE.md` (BL-0099 is the example).
 6. If the item is bigger than roughly one PR (about a day of focused work), split it into
    child items (`parent:` set, `depends_on` ordered so independent work can run in parallel)
    and keep the parent as an epic (`kind: EPIC`). In the epic's *Design* write a **How the epic

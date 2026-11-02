@@ -30,6 +30,9 @@ Read `CLAUDE.md` first.
      holds behaviour, a collaborator created with `new` inside a class, an interface with no
      seam, a branch added where a new class belonged, and a consumer that depends on more
      than it uses. Each is a finding with the class and the rule it breaks.
+   - **Dependency diagram** (`CLAUDE.md`): when the item has one, check it against the code
+     (every class and arrow present, the creator column right); flag a missing diagram for a
+     mechanism of three or more classes.
 4. Write the verdict:
    - **Approved**: set `status: in-qa`, `owner: qa` (for a `skip` or `light` item the
      orchestrator closes it instead, but the status is the same).

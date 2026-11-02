@@ -128,9 +128,23 @@ const PAGE = String.raw`<!doctype html>
 body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif}
 header{position:sticky;top:0;z-index:5;background:var(--panel);border-bottom:1px solid var(--line);padding:10px 16px;display:flex;flex-wrap:wrap;gap:10px 14px;align-items:flex-end}
 header h1{font-size:16px;margin:0 6px 6px 0;align-self:center}
-.pick{display:flex;flex-direction:column;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;min-width:0}
-.pick select{margin-top:2px;max-width:min(360px,80vw);font:13px ui-monospace,Consolas,monospace;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:5px 6px;text-transform:none;letter-spacing:0}
-.pick.active select{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.pick{position:relative;display:flex;flex-direction:column;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;min-width:0}
+.pick .dd{margin-top:2px;display:flex;align-items:center;justify-content:space-between;gap:10px;width:min(300px,80vw);font:14px system-ui,sans-serif;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 12px;text-transform:none;letter-spacing:0;cursor:pointer;text-align:left}
+.pick .ddt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.pick .car{flex:none;color:var(--muted)}
+.pick.active .dd,.pick.open .dd{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.panel{position:absolute;top:100%;left:0;z-index:30;margin-top:6px;width:min(780px,92vw);max-height:min(72vh,640px);overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px;box-shadow:0 12px 32px rgba(0,0,0,.22);text-transform:none;letter-spacing:0;color:var(--ink)}
+.panel[hidden]{display:none}
+.row{display:flex;align-items:baseline;gap:12px;padding:10px 14px;border-radius:8px;font:15px/1.35 system-ui,sans-serif;cursor:pointer;outline:none}
+.row:hover,.row:focus{background:var(--code)}
+.row.sel{background:color-mix(in srgb,var(--accent) 14%,transparent);box-shadow:inset 3px 0 0 var(--accent)}
+.row .tree{flex:none;white-space:pre;font:14px ui-monospace,Consolas,monospace;color:var(--muted)}
+.row .name{flex:1;min-width:0;overflow-wrap:anywhere}
+.row .name b{font-weight:650}
+.row .st{flex:none;font-size:11px;padding:2px 9px;border-radius:999px;background:var(--code);color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.row .st-done{color:#2e9e66}.row .st-in-progress,.row .st-in-review,.row .st-in-qa{color:var(--accent)}
+.grp{padding:12px 14px 4px;font:600 12px system-ui,sans-serif;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.grp:not(:first-child){border-top:1px solid var(--line);margin-top:6px}
 .live{margin-left:auto;font-size:12px;color:var(--muted);align-self:center}
 main{max-width:900px;margin:0 auto;padding:20px 16px 80px}
 article{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 28px 28px;overflow-wrap:anywhere}
@@ -230,49 +244,87 @@ function render(text,path){
 
 // ---------- navigation ----------
 function areaOf(path){return index&&index.areas.find(a=>a.items.some(i=>i.path===path))}
-// Items of an area as a tree: children sit under their parent (epic > child > sub-child), drawn with
-// box characters in the option text. A parent that is not in this area (an ADR's backlog item) becomes
-// an option group; an item without a known parent is a root.
-function optionsOf(area){
-  const nbsp=(s)=>s.replace(/ /g,' ');
+// Items of an area as rows of a tree: children sit under their parent (epic > child > sub-child), drawn
+// with box characters. A parent that is not in this area (an ADR's backlog item) becomes a group
+// heading; an item without a known parent is a root.
+function rowsOf(area){
   const byId=new Map(area.items.filter(i=>i.id).map(i=>[i.id,i]));
-  const kids=new Map(),roots=[],groups=new Map(),seen=new Set();
+  const kids=new Map(),roots=[],groups=new Map(),seen=new Set(),rows=[];
   for(const i of area.items){
     const p=i.parent;
     if(p&&p!==i.id&&byId.has(p)){if(!kids.has(p))kids.set(p,[]);kids.get(p).push(i)}
     else if(p){if(!groups.has(p))groups.set(p,[]);groups.get(p).push(i)}
     else roots.push(i);
   }
-  const option=(i,prefix)=>'<option value="'+esc(i.path)+'">'+esc(nbsp(prefix)+i.file+(i.status?' ['+i.status+']':''))+'</option>';
   function walk(i,trail,last,depth){
-    if(seen.has(i))return '';
+    if(seen.has(i))return;
     seen.add(i);
-    let h=option(i,depth?trail.join('')+(last?'└─ ':'├─ '):'');
+    rows.push({item:i,prefix:depth?trail.join('')+(last?'└─ ':'├─ '):''});
     const c=kids.get(i.id)||[];
-    c.forEach((k,n)=>{h+=walk(k,depth?trail.concat(last?'   ':'│  '):[],n===c.length-1,depth+1)});
-    return h;
+    c.forEach((k,n)=>walk(k,depth?trail.concat(last?'   ':'│  '):[],n===c.length-1,depth+1));
   }
-  const list=(items)=>items.map(i=>walk(i,[],true,0)).join('');
+  const list=(items)=>items.forEach(i=>walk(i,[],true,0));
   const all=index.areas.flatMap(a=>a.items);
-  let h=list(roots);
-  for(const [p,items] of groups){
-    const owner=all.find(i=>i.id===p);
-    h+='<optgroup label="'+esc(p+(owner?' · '+owner.title:''))+'">'+list(items)+'</optgroup>';
-  }
+  list(roots);
+  for(const [p,items] of groups){const owner=all.find(i=>i.id===p);rows.push({group:p+(owner?' · '+owner.title:'')});list(items)}
   // members of a parent cycle are never reached from a root: still list them
-  h+=list(area.items.filter(i=>!seen.has(i)));
-  return h;
+  const left=area.items.filter(i=>!seen.has(i));
+  if(left.length){rows.push({group:'Other'});list(left)}
+  return rows;
 }
+function rowHtml(r){
+  if(r.group)return '<div class="grp">'+esc(r.group)+'</div>';
+  const i=r.item,m=i.file.match(/^(BL-\d+)(.*)$/);
+  const name=m?'<b>'+esc(m[1])+'</b>'+esc(m[2]):esc(i.file);
+  return '<div class="row" role="option" tabindex="-1" data-path="'+esc(i.path)+'"><span class="tree">'+esc(r.prefix)+'</span><span class="name">'+name+'</span>'+
+    (i.status?'<span class="st st-'+esc(i.status)+'">'+esc(i.status)+'</span>':'')+'</div>';
+}
+// One dropdown per area: a button that opens a panel with roomy, larger rows.
 function buildPicks(){
   const wrap=$('#picks');wrap.style.display='contents';
-  wrap.innerHTML=index.areas.filter(a=>a.items.length).map(a=>'<label class="pick" data-a="'+a.id+'">'+esc(a.label)+' ('+a.items.length+')<select data-a="'+a.id+'"><option value="">— select —</option>'+
-    optionsOf(a)+'</select></label>').join('');
-  wrap.querySelectorAll('select').forEach(s=>s.onchange=()=>{if(s.value)location.hash=encodeURIComponent(s.value)});
+  wrap.innerHTML=index.areas.filter(a=>a.items.length).map(a=>'<div class="pick" data-a="'+a.id+'"><span class="lbl">'+esc(a.label)+' ('+a.items.length+')</span>'+
+    '<button type="button" class="dd" aria-haspopup="listbox" aria-expanded="false"><span class="ddt">— select —</span><span class="car">▾</span></button>'+
+    '<div class="panel" role="listbox" hidden>'+rowsOf(a).map(rowHtml).join('')+'</div></div>').join('');
+  wrap.onclick=(e)=>{
+    const b=e.target.closest('.dd');if(b){togglePanel(b.closest('.pick'));return}
+    const r=e.target.closest('.row');if(r){location.hash=encodeURIComponent(r.dataset.path);closePanels()}
+  };
+  wrap.onkeydown=(e)=>{
+    const p=e.target.closest('.pick');if(!p)return;
+    const isOpen=p.classList.contains('open');
+    if(e.key==='Escape'&&isOpen){togglePanel(p);p.querySelector('.dd').focus();return}
+    if(e.key==='ArrowDown'||e.key==='ArrowUp'){
+      e.preventDefault();if(!isOpen)togglePanel(p);
+      const rows=[...p.querySelectorAll('.row')],idx=rows.indexOf(document.activeElement);
+      const n=idx<0?Math.max(0,rows.findIndex(r=>r.classList.contains('sel'))):idx+(e.key==='ArrowDown'?1:-1);
+      rows[Math.min(rows.length-1,Math.max(0,n))].focus();
+    }
+    if(e.key==='Enter'&&e.target.classList.contains('row'))e.target.click();
+  };
   markActive();
+}
+function closePanels(except){
+  document.querySelectorAll('.pick.open').forEach(p=>{if(p===except)return;p.classList.remove('open');p.querySelector('.panel').hidden=true;p.querySelector('.dd').setAttribute('aria-expanded','false')});
+}
+function togglePanel(p){
+  const open=!p.classList.contains('open');
+  closePanels(open?p:null);
+  p.classList.toggle('open',open);
+  const panel=p.querySelector('.panel');panel.hidden=!open;p.querySelector('.dd').setAttribute('aria-expanded',String(open));
+  if(open){
+    panel.style.left='0px';const r=panel.getBoundingClientRect();
+    if(r.right>innerWidth-8)panel.style.left=(innerWidth-8-r.right)+'px';
+    const sel=panel.querySelector('.row.sel');if(sel)sel.scrollIntoView({block:'center'});
+  }
 }
 function markActive(){
   const a=current&&areaOf(current);
-  document.querySelectorAll('.pick').forEach(p=>{const on=a&&p.dataset.a===a.id;p.classList.toggle('active',!!on);const s=p.querySelector('select');s.value=on?current:''});
+  document.querySelectorAll('.pick').forEach(p=>{
+    const on=!!a&&p.dataset.a===a.id;p.classList.toggle('active',on);
+    p.querySelectorAll('.row').forEach(r=>r.classList.toggle('sel',on&&r.dataset.path===current));
+    const item=on&&a.items.find(i=>i.path===current);
+    p.querySelector('.ddt').textContent=item?item.file:'— select —';
+  });
 }
 async function open(path,force){
   if(path===current&&!force)return;
@@ -290,6 +342,7 @@ function route(){
   if(/\.md$/i.test(h))open(h);
 }
 addEventListener('hashchange',route);
+document.addEventListener('click',(e)=>{if(!e.target.closest('.pick'))closePanels()});
 
 async function poll(){
   try{

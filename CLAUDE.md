@@ -139,6 +139,17 @@ left to the product owner.
   6. *Never create a collaborator inside a class* with `new` (except plain values); receive it.
   The architect names each class's single responsibility in the spec; the reviewer checks
   these rules. Apply them to new code and to code you touch anyway.
+- **Dependency diagram** (so a reader sees the shape of a mechanism without opening every file):
+  when a mechanism or feature needs three or more classes (a kernel mechanism such as the
+  schedule lock, or a slice with several collaborators), its spec or the item's *Design* holds a
+  class dependency diagram: an arrow means "uses", each class carries its kind in brackets
+  (scoped service, record, interceptor, ...), and a table beside it lists what each class depends
+  on and who creates it. Draw it as plain text in a code block (it renders everywhere, including
+  `tools/docs.mjs`). The architect draws it, the developer updates it in the same PR when the
+  classes change, and the reviewer checks it against the code and the *Class design* rules (an
+  arrow into a static class, or a class that creates its own collaborator, shows up there).
+  Apply it to new work; do not backfill mechanisms nobody touches. `BL-0099`'s *Class
+  dependencies* section is the reference example.
 - **Architecture**: the application is built as **vertical slices**. Each use case
   (e.g. book an appointment, send a reminder, create a tenant) is one slice in
   `Features/<Area>/<UseCase>/` that owns its endpoint or page, request/response types,

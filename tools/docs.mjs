@@ -5,7 +5,8 @@
 //   node tools/docs.mjs --open           ...and open it in the browser
 //   node tools/docs.mjs --port 5000      other port
 //
-// One dropdown per area; pick an item to jump into it. New, renamed or edited files show up on
+// One dropdown per area, shown as a tree (backlog children under their parent, ADRs under their
+// backlog item); pick an item to jump into it. New, renamed or edited files show up on
 // their own (the page polls the server every 2s), and links between .md files work in the viewer.
 // Read-only, binds to localhost, serves only .md files inside the repository.
 // No dependencies, Node 18+. This is team tooling, not part of the product.
@@ -53,7 +54,11 @@ function describe(path) {
   const h1 = text.replace(/^---[\s\S]*?\r?\n---/, '').match(/^#\s+(.+)$/m);
   const file = path.split('/').pop().replace(/\.md$/i, '');
   const title = fm.title || (h1 && h1[1].trim()) || file;
-  return { path, file, title, status: fm.status || '', mtime: statSync(abs).mtimeMs };
+  // Relations for the tree in the dropdowns: a backlog item names its parent; an ADR file name
+  // (BL-NNNN-ADRNNNN-subject.md) names the backlog item it belongs to.
+  let parent = fm.parent || '';
+  if (!fm.id && !parent) { const adr = file.match(/^(BL-\d+)-ADR\d+/); if (adr) parent = adr[1]; }
+  return { path, file, title, id: fm.id || '', parent, status: fm.status || '', mtime: statSync(abs).mtimeMs };
 }
 
 function scan() {
@@ -124,7 +129,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 system-ui,-app
 header{position:sticky;top:0;z-index:5;background:var(--panel);border-bottom:1px solid var(--line);padding:10px 16px;display:flex;flex-wrap:wrap;gap:10px 14px;align-items:flex-end}
 header h1{font-size:16px;margin:0 6px 6px 0;align-self:center}
 .pick{display:flex;flex-direction:column;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;min-width:0}
-.pick select{margin-top:2px;max-width:min(300px,80vw);font:13px system-ui;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:5px 6px;text-transform:none;letter-spacing:0}
+.pick select{margin-top:2px;max-width:min(360px,80vw);font:13px ui-monospace,Consolas,monospace;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:5px 6px;text-transform:none;letter-spacing:0}
 .pick.active select{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
 .live{margin-left:auto;font-size:12px;color:var(--muted);align-self:center}
 main{max-width:900px;margin:0 auto;padding:20px 16px 80px}
@@ -225,11 +230,43 @@ function render(text,path){
 
 // ---------- navigation ----------
 function areaOf(path){return index&&index.areas.find(a=>a.items.some(i=>i.path===path))}
+// Items of an area as a tree: children sit under their parent (epic > child > sub-child), drawn with
+// box characters in the option text. A parent that is not in this area (an ADR's backlog item) becomes
+// an option group; an item without a known parent is a root.
+function optionsOf(area){
+  const nbsp=(s)=>s.replace(/ /g,' ');
+  const byId=new Map(area.items.filter(i=>i.id).map(i=>[i.id,i]));
+  const kids=new Map(),roots=[],groups=new Map(),seen=new Set();
+  for(const i of area.items){
+    const p=i.parent;
+    if(p&&p!==i.id&&byId.has(p)){if(!kids.has(p))kids.set(p,[]);kids.get(p).push(i)}
+    else if(p){if(!groups.has(p))groups.set(p,[]);groups.get(p).push(i)}
+    else roots.push(i);
+  }
+  const option=(i,prefix)=>'<option value="'+esc(i.path)+'">'+esc(nbsp(prefix)+i.file+(i.status?' ['+i.status+']':''))+'</option>';
+  function walk(i,trail,last,depth){
+    if(seen.has(i))return '';
+    seen.add(i);
+    let h=option(i,depth?trail.join('')+(last?'└─ ':'├─ '):'');
+    const c=kids.get(i.id)||[];
+    c.forEach((k,n)=>{h+=walk(k,depth?trail.concat(last?'   ':'│  '):[],n===c.length-1,depth+1)});
+    return h;
+  }
+  const list=(items)=>items.map(i=>walk(i,[],true,0)).join('');
+  const all=index.areas.flatMap(a=>a.items);
+  let h=list(roots);
+  for(const [p,items] of groups){
+    const owner=all.find(i=>i.id===p);
+    h+='<optgroup label="'+esc(p+(owner?' · '+owner.title:''))+'">'+list(items)+'</optgroup>';
+  }
+  // members of a parent cycle are never reached from a root: still list them
+  h+=list(area.items.filter(i=>!seen.has(i)));
+  return h;
+}
 function buildPicks(){
   const wrap=$('#picks');wrap.style.display='contents';
   wrap.innerHTML=index.areas.filter(a=>a.items.length).map(a=>'<label class="pick" data-a="'+a.id+'">'+esc(a.label)+' ('+a.items.length+')<select data-a="'+a.id+'"><option value="">— select —</option>'+
-    a.items.map(i=>{const t=i.file;
-      return '<option value="'+esc(i.path)+'">'+esc(t+(i.status?' ['+i.status+']':''))+'</option>'}).join('')+'</select></label>').join('');
+    optionsOf(a)+'</select></label>').join('');
   wrap.querySelectorAll('select').forEach(s=>s.onchange=()=>{if(s.value)location.hash=encodeURIComponent(s.value)});
   markActive();
 }

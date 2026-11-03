@@ -278,6 +278,82 @@ function wtPanel(wts) {
       : '<div class="meta">no backlog changes yet</div>'}</div>`).join('');
 }
 
+// Epic-level dependency graph: an edge A -> B means A (or one of its items) needs B (or one of its items) done first.
+function epicGraph(a) {
+  const epicIds = new Set(a.epics.map((e) => e.parent?.id).filter(Boolean));
+  const owner = (id) => {
+    for (let cur = a.map.get(id), hops = 0; cur && hops < 10; cur = a.map.get(cur.parent), hops++) if (epicIds.has(cur.id)) return cur.id;
+    return id;
+  };
+  const deps = new Map(); // node id -> Set of node ids it needs
+  const add = (id) => { if (!deps.has(id)) deps.set(id, new Set()); };
+  for (const e of a.epics) {
+    if (!e.parent) continue;
+    const me = e.parent.id;
+    add(me);
+    for (const src of [e.parent, ...e.kids]) {
+      for (const d of src.dependsOn) {
+        const to = owner(d);
+        if (to === me || !a.map.has(d)) continue;
+        add(to);
+        deps.get(me).add(to);
+      }
+    }
+  }
+  const level = new Map();
+  const lv = (id, seen = new Set()) => {
+    if (level.has(id)) return level.get(id);
+    if (seen.has(id)) return 0; // cycle guard
+    seen.add(id);
+    const v = [...deps.get(id)].reduce((m, d) => Math.max(m, lv(d, seen) + 1), 0);
+    level.set(id, v);
+    return v;
+  };
+  for (const id of deps.keys()) lv(id);
+  // drop A -> C when A already reaches C through another prerequisite
+  const reaches = (from, target, skip, seen = new Set()) => [...(deps.get(from) ?? [])].some((d) => d !== skip && !seen.has(d) && (d === target || (seen.add(d), reaches(d, target, null, seen))));
+  for (const [id, tos] of deps) for (const to of [...tos]) if (reaches(id, to, to)) tos.delete(to);
+  return { deps, level, epicIds };
+}
+
+function epicGraphSvg(a) {
+  const { deps, level, epicIds } = epicGraph(a);
+  if (!deps.size) return '<p class="none">no dependencies between epics yet</p>';
+  const W = 200, H = 54, GX = 80, GY = 16, PAD = 10;
+  const cols = [];
+  for (const id of [...deps.keys()].sort()) (cols[level.get(id)] ??= []).push(id);
+  const pos = new Map();
+  let row = 0; // one row per node, so a line entering a node never crosses another one
+  cols.forEach((col, x) => col?.forEach((id) => pos.set(id, { x: PAD + x * (W + GX), y: PAD + 18 + row++ * (H + GY), row })));
+  const width = PAD * 2 + cols.length * (W + GX) - GX;
+  const height = PAD * 2 + 18 + row * (H + GY) - GY;
+  const clip = (t, n) => (t.length > n ? t.slice(0, n - 1) + '…' : t);
+  const lines = [...deps].flatMap(([from, tos]) => [...tos].map((to) => {
+    const f = pos.get(to), t = pos.get(from); // arrow runs from the prerequisite to the item that needs it
+    const x1 = f.x + W, y1 = f.y + H / 2, x2 = t.x, y2 = t.y + H / 2, cx = x1 + 10 + (f.row % 6) * 7;
+    return { from, to, x1, y1, x2, y2, cx };
+  }));
+  // a horizontal run that crosses another arrow's vertical run hops over it with a small arc
+  const R = 4;
+  const hop = (y, xa, xb, self) => {
+    const xs = lines.filter((l) => l !== self && l.cx > xa + R && l.cx < xb - R && y > Math.min(l.y1, l.y2) && y < Math.max(l.y1, l.y2)).map((l) => l.cx).sort((m, n) => m - n);
+    return [...new Set(xs)].map((x) => `H${x - R} a${R},${R} 0 0 1 ${2 * R},0`).join(' ') + ` H${xb}`;
+  };
+  const edges = lines.map((l) => {
+    const open = a.map.get(l.to)?.status !== 'done';
+    return `<path class="edge${open ? ' open' : ''}" d="M${l.x1},${l.y1} ${hop(l.y1, l.x1, l.cx, l)} V${l.y2} ${hop(l.y2, l.cx, l.x2, l)}" marker-end="url(#arr)"><title>${esc(l.from)} needs ${esc(l.to)}</title></path>`;
+  }).join('');
+  const nodes = [...pos].map(([id, p]) => {
+    const it = a.map.get(id);
+    const isEpic = epicIds.has(id);
+    const e = a.epics.find((x) => x.parent?.id === id);
+    const prog = e && e.kids.length ? ` · ${e.done}/${e.kids.length}` : '';
+    return `<g class="gnode s-${esc(it?.status ?? '')}${isEpic ? ' epic' : ''}" transform="translate(${p.x},${p.y})"><title>${esc(id)} ${esc(it?.title ?? '')} (${esc(it?.status ?? '?')})</title><rect width="${W}" height="${H}" rx="6"/><text class="gid" x="8" y="17">${esc(id)}${isEpic ? ' · EPIC' : ''}</text><text class="gst" x="${W - 8}" y="17" text-anchor="end">${esc(it?.status ?? '')}${esc(prog)}</text><text class="gtitle" x="8" y="38">${esc(clip(it?.title ?? '', 30))}</text></g>`;
+  }).join('');
+  const heads = cols.map((c, x) => (c ? `<text class="gwave" x="${PAD + x * (W + GX)}" y="${PAD + 6}">${x === 0 ? 'start here' : `then (wave ${x + 1})`}</text>` : '')).join('');
+  return `<div class="graph"><svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-label="Epic dependency graph"><defs><marker id="arr" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L8,4 L0,8 z" class="head"/></marker></defs>${heads}${edges}${nodes}</svg></div><p class="meta">Arrows point from a prerequisite to what needs it. Orange arrows are still waiting on an unfinished prerequisite. Left to right is a safe delivery order. Redundant arrows (already implied by another path) are left out.</p>`;
+}
+
 function html(items, a, weekStart, weekEnd, now, version, wts) {
   const last = new Date(weekEnd.getFullYear(), weekEnd.getMonth(), weekEnd.getDate() - 1);
   const done = items.filter((i) => i.status === 'done').length;
@@ -352,6 +428,11 @@ ul + .pager{display:flex;justify-content:flex-end;margin-top:6px}
 .kid{border:1px solid var(--line);border-left:3px solid var(--muted);border-radius:5px;padding:3px 8px;background:color-mix(in srgb,var(--panel) 55%,var(--bg))}
 .kid.s-done{border-left-color:var(--ok);opacity:.75}.kid.s-in-progress,.kid.s-in-review,.kid.s-in-qa{border-left-color:var(--accent)}.kid.s-ready,.kid.s-designed{border-left-color:var(--warn)}
 .st{font-size:10px;color:var(--muted);margin-left:auto}.epiccard>.row .st{margin-left:0}
+.gd{border:2px solid #8e5bd6;border-radius:8px;padding:8px 12px;margin-bottom:20px;background:color-mix(in srgb,#8e5bd6 6%,transparent)}.gd>summary{cursor:pointer;list-style:revert}.gd>summary h2{display:inline;margin:0}.gd[open]>summary{margin-bottom:8px}.graph{max-height:70vh;overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:6px;margin-bottom:6px}.graph svg{display:block}
+.edge{fill:none;stroke:var(--muted);stroke-width:1.5;stroke-linejoin:round}.edge.open{stroke:var(--warn)}.head{fill:var(--muted)}
+.gnode rect{fill:color-mix(in srgb,var(--panel) 55%,var(--bg));stroke:var(--muted);stroke-width:1.5}.gnode.epic rect{stroke:#8e5bd6}.gnode.s-done rect{stroke:var(--ok);opacity:.8}
+.gnode.s-in-progress rect,.gnode.s-in-review rect,.gnode.s-in-qa rect{stroke:var(--accent)}.gnode.s-ready rect,.gnode.s-designed rect{stroke:var(--warn)}
+.gnode text{fill:var(--text)}.gid{font:11px ui-monospace,Consolas,monospace;fill:var(--muted)!important}.gst{font-size:10px;fill:var(--muted)!important}.gtitle{font-size:12px;font-weight:600}.gwave{font-size:11px;fill:var(--muted)!important}
 .feed{list-style:none;padding:0!important}.feed li{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.feed time{color:var(--muted);font-family:ui-monospace,Consolas,monospace;font-size:12px}
 .filters{margin:0 0 10px;display:flex;gap:6px;flex-wrap:wrap}.filters button{background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:14px;padding:3px 11px;cursor:pointer}
 .filters button[aria-pressed=true]{background:var(--accent);color:#fff;border-color:var(--accent)}
@@ -381,6 +462,10 @@ a{color:var(--accent)}
 
 <h2>Epics</h2>
 <div class="epics">${epics}</div>
+
+<details class="gd"><summary><h2>Epic delivery order</h2></summary>
+${epicGraphSvg(a)}
+</details>
 
 <h2>Board</h2>
 <div class="filters" id="filters"><button data-k="" aria-pressed="true">All</button>${KINDS.map((k) => `<button data-k="${k}" aria-pressed="false">${k}</button>`).join('')}</div>

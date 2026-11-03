@@ -376,7 +376,7 @@ function html(items, a, weekStart, weekEnd, now, version, wts) {
         const kids = e.kids.map((k) => {
           const needs = a.unmet(k);
           const flag = (k.blocked || k.questions) && k.status !== 'done' ? '<span class="flag bad">blocked</span>' : '';
-          return `<div class="kid s-${esc(k.status)}" title="${esc(k.title)}"><div class="row"><span class="id">${esc(k.id)}</span><span class="kind k-${esc(k.kind)}">${esc(k.kind)}</span><span class="st">${esc(k.status)}</span></div><div class="title">${esc(k.title)}</div>${needs.length || flag ? `<div class="flags">${flag}${needs.length ? `<span class="flag warn">needs ${esc(needs.join(', '))}</span>` : ''}</div>` : ''}</div>`;
+          return `<div class="kid s-${esc(k.status)}" title="${esc(k.title)}"><div class="row"><span class="id">${esc(k.id)}</span><span class="kind k-${esc(k.kind)}">${esc(k.kind)}</span><span class="prio p-${esc(k.priority)}">${esc(k.priority)}</span><span class="st">${esc(k.status)}</span></div><div class="title">${esc(k.title)}</div>${needs.length || flag ? `<div class="flags">${flag}${needs.length ? `<span class="flag warn">needs ${esc(needs.join(', '))}</span>` : ''}</div>` : ''}</div>`;
         }).join('') || '<p class="none">no child items yet</p>';
         return `<article class="epiccard"><div class="row"><span class="id">${esc(e.parent.id)}</span><span class="kind k-EPIC">EPIC</span><span class="st">${esc(e.parent.status)}</span><span class="meta" style="margin-left:auto">${e.done}/${n} done</span></div><div class="title wrap">${esc(e.parent.title)}</div><div class="bar"><i style="width:${p}%"></i></div>${epicNeeds.length ? `<div class="flags"><span class="flag warn">epic needs ${esc(epicNeeds.join(', '))}</span></div>` : ''}<div class="kids">${kids}</div></article>`;
       }).join('')
@@ -427,7 +427,7 @@ ul + .pager{display:flex;justify-content:flex-end;margin-top:6px}
 .title.wrap{white-space:normal;font-size:14px}.kids{display:flex;flex-direction:column;gap:5px;margin-top:8px;max-height:340px;overflow-y:auto}
 .kid{border:1px solid var(--line);border-left:3px solid var(--muted);border-radius:5px;padding:3px 8px;background:color-mix(in srgb,var(--panel) 55%,var(--bg))}
 .kid.s-done{border-left-color:var(--ok);opacity:.75}.kid.s-in-progress,.kid.s-in-review,.kid.s-in-qa{border-left-color:var(--accent)}.kid.s-ready,.kid.s-designed{border-left-color:var(--warn)}
-.st{font-size:10px;color:var(--muted);margin-left:auto}.epiccard>.row .st{margin-left:0}
+.st{font-size:10px;color:var(--muted);margin-left:auto}.epiccard>.row .st{margin-left:0}.kid>.row .st{margin-left:0}
 .gd{border:2px solid #8e5bd6;border-radius:8px;padding:8px 12px;margin-bottom:20px;background:color-mix(in srgb,#8e5bd6 6%,transparent)}.gd>summary{cursor:pointer;list-style:revert}.gd>summary h2{display:inline;margin:0}.gd[open]>summary{margin-bottom:8px}.graph{max-height:70vh;overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:6px;margin-bottom:6px}.graph svg{display:block}
 .edge{fill:none;stroke:var(--muted);stroke-width:1.5;stroke-linejoin:round}.edge.open{stroke:var(--warn)}.head{fill:var(--muted)}
 .gnode rect{fill:color-mix(in srgb,var(--panel) 55%,var(--bg));stroke:var(--muted);stroke-width:1.5}.gnode.epic rect{stroke:#8e5bd6}.gnode.s-done rect{stroke:var(--ok);opacity:.8}

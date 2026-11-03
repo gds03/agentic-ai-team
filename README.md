@@ -1,4 +1,4 @@
-# gdscreate-shop-agentic-scheduleapp
+# agentic-ai-team
 
 Built by a team of Claude agents (architect, developers, reviewer, QA, scrum master,
 researcher) with a human product owner.

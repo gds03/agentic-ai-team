@@ -58,7 +58,8 @@ function describe(path) {
   // (BL-NNNN-ADRNNNN-subject.md) names the backlog item it belongs to.
   let parent = fm.parent || '';
   if (!fm.id && !parent) { const adr = file.match(/^(BL-\d+)-ADR\d+/); if (adr) parent = adr[1]; }
-  return { path, file, title, id: fm.id || '', parent, status: fm.status || '', mtime: statSync(abs).mtimeMs };
+  // priority as the board shows it (P2 when a backlog item names none); other documents have none
+  return { path, file, title, id: fm.id || '', parent, status: fm.status || '', priority: fm.id ? fm.priority || 'P2' : '', mtime: statSync(abs).mtimeMs };
 }
 
 function scan() {
@@ -122,8 +123,8 @@ const PAGE = String.raw`<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Project docs</title>
 <style>
-:root{--bg:#f6f7f9;--panel:#fff;--ink:#1c2230;--muted:#667085;--line:#e2e5ea;--accent:#2f5bea;--code:#f0f2f5;--quote:#c9d3f5}
-@media(prefers-color-scheme:dark){:root{--bg:#14171d;--panel:#1c2028;--ink:#e6e9ef;--muted:#98a2b3;--line:#2b313c;--accent:#7b9bff;--code:#252b35;--quote:#3a4a86}}
+:root{--bg:#f6f7f9;--panel:#fff;--ink:#1c2230;--muted:#667085;--line:#e2e5ea;--accent:#2f5bea;--code:#f0f2f5;--quote:#c9d3f5;--bad:#c4382f;--warn:#a96a00}
+@media(prefers-color-scheme:dark){:root{--bg:#14171d;--panel:#1c2028;--ink:#e6e9ef;--muted:#98a2b3;--line:#2b313c;--accent:#7b9bff;--code:#252b35;--quote:#3a4a86;--bad:#f0706a;--warn:#e0a63c}}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif}
 header{position:sticky;top:0;z-index:5;background:var(--panel);border-bottom:1px solid var(--line);padding:10px 16px;display:flex;flex-wrap:wrap;gap:10px 14px;align-items:flex-end}
@@ -142,6 +143,13 @@ header h1{font-size:16px;margin:0 6px 6px 0;align-self:center}
 .row .name{flex:1;min-width:0;overflow-wrap:anywhere}
 .row .name b{font-weight:650}
 .row .st{flex:none;font-size:11px;padding:2px 9px;border-radius:999px;background:var(--code);color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.row .prio{flex:none;font-size:10px;font-weight:700;border-radius:4px;padding:1px 5px;border:1px solid var(--line);color:var(--muted)}
+.row .p-P0{color:var(--bad);border-color:var(--bad)}.row .p-P1{color:var(--warn);border-color:var(--warn)}
+.find{position:sticky;top:-8px;z-index:1;margin:-8px -8px 6px;padding:10px 8px 8px;background:var(--panel);border-bottom:1px solid var(--line)}
+.find input{width:100%;font:14px system-ui,sans-serif;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 12px;outline:none}
+.find input:focus{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.row[hidden],.grp[hidden]{display:none}
+.nomatch{padding:14px;color:var(--muted);font-size:14px}
 .row .st-done{color:#2e9e66}.row .st-in-progress,.row .st-in-review,.row .st-in-qa{color:var(--accent)}
 .grp{padding:12px 14px 4px;font:600 12px system-ui,sans-serif;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
 .grp:not(:first-child){border-top:1px solid var(--line);margin-top:6px}
@@ -276,7 +284,9 @@ function rowHtml(r){
   if(r.group)return '<div class="grp">'+esc(r.group)+'</div>';
   const i=r.item,m=i.file.match(/^(BL-\d+)(.*)$/);
   const name=m?'<b>'+esc(m[1])+'</b>'+esc(m[2]):esc(i.file);
-  return '<div class="row" role="option" tabindex="-1" data-path="'+esc(i.path)+'"><span class="tree">'+esc(r.prefix)+'</span><span class="name">'+name+'</span>'+
+  const q=[i.file,i.title,i.id,i.status,i.priority].join(' ').toLowerCase();
+  return '<div class="row" role="option" tabindex="-1" data-path="'+esc(i.path)+'" data-q="'+esc(q)+'"><span class="tree">'+esc(r.prefix)+'</span><span class="name">'+name+'</span>'+
+    (i.priority?'<span class="prio p-'+esc(i.priority)+'">'+esc(i.priority)+'</span>':'')+
     (i.status?'<span class="st st-'+esc(i.status)+'">'+esc(i.status)+'</span>':'')+'</div>';
 }
 // One dropdown per area: a button that opens a panel with roomy, larger rows.
@@ -284,24 +294,51 @@ function buildPicks(){
   const wrap=$('#picks');wrap.style.display='contents';
   wrap.innerHTML=index.areas.filter(a=>a.items.length).map(a=>'<div class="pick" data-a="'+a.id+'"><span class="lbl">'+esc(a.label)+' ('+a.items.length+')</span>'+
     '<button type="button" class="dd" aria-haspopup="listbox" aria-expanded="false"><span class="ddt">— select —</span><span class="car">▾</span></button>'+
-    '<div class="panel" role="listbox" hidden>'+rowsOf(a).map(rowHtml).join('')+'</div></div>').join('');
+    '<div class="panel" role="listbox" hidden><div class="find"><input type="search" placeholder="Search (id, title, status, P0...)" aria-label="Search '+esc(a.label)+'" autocomplete="off" spellcheck="false"></div>'+
+    rowsOf(a).map(rowHtml).join('')+'<div class="nomatch" hidden>No match</div></div></div>').join('');
   wrap.onclick=(e)=>{
     const b=e.target.closest('.dd');if(b){togglePanel(b.closest('.pick'));return}
     const r=e.target.closest('.row');if(r){location.hash=encodeURIComponent(r.dataset.path);closePanels()}
   };
+  wrap.oninput=(e)=>{if(e.target.matches('.find input'))filterPanel(e.target.closest('.pick'),e.target.value)};
   wrap.onkeydown=(e)=>{
     const p=e.target.closest('.pick');if(!p)return;
     const isOpen=p.classList.contains('open');
     if(e.key==='Escape'&&isOpen){togglePanel(p);p.querySelector('.dd').focus();return}
+    const rows=[...p.querySelectorAll('.row')].filter(r=>!r.hidden);
     if(e.key==='ArrowDown'||e.key==='ArrowUp'){
       e.preventDefault();if(!isOpen)togglePanel(p);
-      const rows=[...p.querySelectorAll('.row')],idx=rows.indexOf(document.activeElement);
-      const n=idx<0?Math.max(0,rows.findIndex(r=>r.classList.contains('sel'))):idx+(e.key==='ArrowDown'?1:-1);
-      rows[Math.min(rows.length-1,Math.max(0,n))].focus();
+      const visible=[...p.querySelectorAll('.row')].filter(r=>!r.hidden);
+      if(!visible.length)return;
+      const idx=visible.indexOf(document.activeElement);
+      if(idx<0&&e.target.matches('.find input')&&e.key==='ArrowDown'){visible[0].focus();return}
+      if(idx===0&&e.key==='ArrowUp'){p.querySelector('.find input').focus();return}
+      const n=idx<0?Math.max(0,visible.findIndex(r=>r.classList.contains('sel'))):idx+(e.key==='ArrowDown'?1:-1);
+      visible[Math.min(visible.length-1,Math.max(0,n))].focus();
     }
-    if(e.key==='Enter'&&e.target.classList.contains('row'))e.target.click();
+    if(e.key==='Enter'){
+      if(e.target.classList.contains('row'))e.target.click();
+      else if(e.target.matches('.find input')&&rows.length){e.preventDefault();rows[0].click()}
+    }
   };
   markActive();
+}
+// Search: every word typed must appear in the row's id, name, title, status or priority; group headings with no
+// visible row under them are hidden too.
+function filterPanel(p,text){
+  const words=text.toLowerCase().split(/\s+/).filter(Boolean);
+  const panel=p.querySelector('.panel');
+  let group=null,groupHas=false,any=false;
+  const closeGroup=()=>{if(group)group.hidden=!groupHas};
+  for(const el of panel.children){
+    if(el.classList.contains('grp')){closeGroup();group=el;groupHas=false}
+    else if(el.classList.contains('row')){
+      const show=words.every(w=>el.dataset.q.includes(w));
+      el.hidden=!show;if(show){groupHas=true;any=true}
+    }
+  }
+  closeGroup();
+  panel.querySelector('.nomatch').hidden=any;
 }
 function closePanels(except){
   document.querySelectorAll('.pick.open').forEach(p=>{if(p===except)return;p.classList.remove('open');p.querySelector('.panel').hidden=true;p.querySelector('.dd').setAttribute('aria-expanded','false')});
@@ -315,6 +352,7 @@ function togglePanel(p){
     panel.style.left='0px';const r=panel.getBoundingClientRect();
     if(r.right>innerWidth-8)panel.style.left=(innerWidth-8-r.right)+'px';
     const sel=panel.querySelector('.row.sel');if(sel)sel.scrollIntoView({block:'center'});
+    const box=panel.querySelector('.find input');box.value='';filterPanel(p,'');box.focus({preventScroll:true});
   }
 }
 function markActive(){

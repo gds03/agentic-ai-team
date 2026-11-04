@@ -154,7 +154,7 @@ header h1{font-size:16px;margin:0 6px 6px 0;align-self:center}
 .grp{padding:12px 14px 4px;font:600 12px system-ui,sans-serif;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
 .grp:not(:first-child){border-top:1px solid var(--line);margin-top:6px}
 .live{margin-left:auto;font-size:12px;color:var(--muted);align-self:center}
-main{max-width:900px;margin:0 auto;padding:20px 16px 80px}
+main{max-width:1700px;margin:0 auto;padding:20px 16px 80px}
 article{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 28px 28px;overflow-wrap:anywhere}
 .path{font:12px ui-monospace,Consolas,monospace;color:var(--muted);margin:10px 0 0}
 .fm{border:1px solid var(--line);border-radius:8px;margin:14px 0;font-size:13px;overflow:hidden}

@@ -150,6 +150,14 @@ left to the product owner.
   arrow into a static class, or a class that creates its own collaborator, shows up there).
   Apply it to new work; do not backfill mechanisms nobody touches. `BL-0099`'s *Class
   dependencies* section is the reference example.
+- **Folder and file layout as a tree** (so a reader sees where things live without joining paths
+  in their head): whenever a spec, ADR, backlog item, research note or report says where code,
+  tests or docs live and names two or more paths, it shows them as a text tree in a code block
+  (`├─`, `└─`, `│`, one entry per line, a short note after the entry where it helps, and the owning
+  item ID where several items own parts). A table of paths alone is not enough; it may stay beside
+  the tree for the columns a tree cannot carry (owner, reason). A single path in a sentence is fine
+  as inline code. Apply it to new work and to sections you touch anyway; do not backfill untouched
+  files.
 - **Architecture**: the application is built as **vertical slices**. Each use case
   (e.g. book an appointment, send a reminder, create a tenant) is one slice in
   `Features/<Area>/<UseCase>/` that owns its endpoint or page, request/response types,

@@ -33,6 +33,8 @@ Read `CLAUDE.md` first.
    - **Dependency diagram** (`CLAUDE.md`): when the item has one, check it against the code
      (every class and arrow present, the creator column right); flag a missing diagram for a
      mechanism of three or more classes.
+   - **Layout as a tree** (`CLAUDE.md`): a spec or item section you review that lists two or more
+     paths only as a flat list or a table gets a nit asking for the text tree.
 4. Write the verdict:
    - **Approved**: set `status: in-qa`, `owner: qa` (for a `skip` or `light` item the
      orchestrator closes it instead, but the status is the same).

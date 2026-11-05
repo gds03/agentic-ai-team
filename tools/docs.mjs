@@ -59,7 +59,7 @@ function describe(path) {
   let parent = fm.parent || '';
   if (!fm.id && !parent) { const adr = file.match(/^(BL-\d+)-ADR\d+/); if (adr) parent = adr[1]; }
   // priority as the board shows it (P2 when a backlog item names none); other documents have none
-  return { path, file, title, id: fm.id || '', parent, status: fm.status || '', priority: fm.id ? fm.priority || 'P2' : '', mtime: statSync(abs).mtimeMs };
+  return { path, file, title, id: fm.id || '', kind: fm.kind || '', parent, status: fm.status || '', priority: fm.id ? fm.priority || 'P2' : '', mtime: statSync(abs).mtimeMs };
 }
 
 function scan() {
@@ -156,6 +156,7 @@ header h1{font-size:16px;margin:0 6px 6px 0;align-self:center}
 .live{margin-left:auto;font-size:12px;color:var(--muted);align-self:center}
 main{max-width:1700px;margin:0 auto;padding:20px 16px 80px}
 article{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 28px 28px;overflow-wrap:anywhere}
+.epiclink{margin:14px 0 0;font-size:13px}
 .path{font:12px ui-monospace,Consolas,monospace;color:var(--muted);margin:10px 0 0}
 .fm{border:1px solid var(--line);border-radius:8px;margin:14px 0;font-size:13px;overflow:hidden}
 .fm div{display:flex;gap:10px;padding:4px 10px;border-top:1px solid var(--line)}.fm div:first-child{border-top:0}
@@ -234,10 +235,14 @@ function render(text,path){
   const m=text.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/);
   if(m){fm='<div class="fm">'+m[1].split(/\r?\n/).map(l=>{const kv=l.match(/^([A-Za-z_]+):\s*(.*)$/);return kv?'<div><b>'+esc(kv[1])+'</b><span>'+esc(kv[2])+'</span></div>':''}).join('')+'</div>';text=m[2]}
   const el=$('#doc');
-  el.innerHTML='<p class="path">'+esc(path)+'</p>'+fm+md(text);
+  // a story whose parent is an epic gets a link to that epic on top
+  const me=index&&index.areas.flatMap(a=>a.items).find(i=>i.path===path);
+  const epic=me&&me.parent&&index.areas.flatMap(a=>a.items).find(i=>i.id===me.parent&&(i.kind==='EPIC'||/^BL-\d+-EPIC-/.test(i.file)));
+  const up=epic?'<p class="epiclink">↑ Epic: <a class="epic" href="#'+encodeURIComponent(epic.path)+'">'+esc(epic.id+' · '+epic.title)+'</a></p>':'';
+  el.innerHTML=up+'<p class="path">'+esc(path)+'</p>'+fm+md(text);
   // links to other .md files stay inside the viewer; other relative links are shown as text
   const base=path.split('/').slice(0,-1);
-  el.querySelectorAll('a[href]').forEach(a=>{
+  el.querySelectorAll('a[href]:not(.epic)').forEach(a=>{
     const h=a.getAttribute('href');
     if(/^(https?:|mailto:)/.test(h)){a.target='_blank';a.rel='noopener';return}
     const [file,hash]=h.split('#');
@@ -351,8 +356,11 @@ function togglePanel(p){
   if(open){
     panel.style.left='0px';const r=panel.getBoundingClientRect();
     if(r.right>innerWidth-8)panel.style.left=(innerWidth-8-r.right)+'px';
-    const sel=panel.querySelector('.row.sel');if(sel)sel.scrollIntoView({block:'center'});
-    const box=panel.querySelector('.find input');box.value='';filterPanel(p,'');box.focus({preventScroll:true});
+    const box=panel.querySelector('.find input');box.value='';filterPanel(p,'');
+    // show the active item: scroll it into the middle of the list (after the filter is cleared, so rows do not shift)
+    const sel=panel.querySelector('.row.sel');
+    if(sel)panel.scrollTop=Math.max(0,sel.offsetTop-panel.clientHeight/2+sel.offsetHeight/2);
+    box.focus({preventScroll:true});
   }
 }
 function markActive(){

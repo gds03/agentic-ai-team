@@ -107,7 +107,13 @@ Rules:
 
 ## Sections
 
-- **Goal**: why, from the user's point of view.
+- **Goal**: why, from the user's point of view, followed by a **goal diagram**: a short text diagram
+  in a code block (about 10 lines at most, 80 columns, product words, no class names) showing who or
+  what is involved, what goes wrong or is missing today, and what is true after the item. Use whatever
+  shape reads best: a `Today` / `After` pair, a flow with the failing step marked, or a small actor
+  picture. It illustrates the Goal text, it does not replace it. For an `EPIC`, show the outcome the
+  children add up to; for a `BUG`, the failing path versus the expected one; for `RESEARCH` / `ARCH`,
+  the question or decision and what it unblocks.
 - **Acceptance criteria**: numbered, testable. QA verifies each one.
 - **Design**: filled by the architect: approach, contracts, files likely touched.
 - **Open questions**: for the product owner. Unanswered questions block the item.

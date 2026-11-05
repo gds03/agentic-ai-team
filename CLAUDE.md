@@ -179,6 +179,23 @@ left to the product owner.
   the page); any other file may. Public kernel contracts and kernel options keep their own
   files, because nesting them would rename public API. Apply it to new code and to code you
   touch anyway; do not refactor untouched files for it.
+- **Goal diagram** (so the product owner sees the problem at a glance): the *Goal* section of every
+  backlog item ends with a short text diagram in a code block that illustrates what we are trying to
+  solve: who or what is involved, what goes wrong or is missing today, and what is true after the item
+  (`Today` / `Problem` / `After`, or a before-and-after flow). At most about 10 lines of 80 characters,
+  plain text so it renders everywhere including `tools/docs.mjs`, in the product's words rather than class
+  names. The text of the Goal stays; the diagram illustrates it and does not replace it. The scrum master
+  or architect writes it when the item is created, the architect updates it if the design changes what
+  is being solved, and the reviewer flags a missing or misleading one. Example:
+
+  ```
+  Today:  Customer A --book 10:00--> [check free] -----> [save]  both succeed
+          Customer B --book 10:00--> [check free] -----> [save]  = double booking
+  After:  Customer A --book 10:00--> [take lock] [check] [save] [release]
+          Customer B --book 10:00--> [wait for lock ....] [check: taken] -> no
+  ```
+
+  Format in [`docs/backlog/README.md`](docs/backlog/README.md).
 - **Decisions**: anything hard to reverse (framework, database, auth, public API shape)
   gets an ADR, status `proposed` until the product owner accepts it.
 

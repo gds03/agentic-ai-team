@@ -22,7 +22,10 @@ Implement exactly one backlog item.
    `<UseCase>Data` holder class in `<UseCase>Data.cs`; types with logic get their own file
    (see *Data carriers versus logic* in `CLAUDE.md`).
 4. Write unit tests alongside the code. Run the build and the full test suite (commands are
-   in `CLAUDE.md`); everything must pass.
+   in `CLAUDE.md`); everything must pass. **Checkpoint as you go** (see *Checkpoints and
+   interrupted runs* in `CLAUDE.md`): commit and push the branch when the failing tests are written,
+   then after each criterion or slice is done, and append a *Log* line `developer: checkpoint: <done>;
+   next: <remaining>` each time. If the Log already shows checkpoints, continue from them.
 5. Commit with `BL-NNNN: <imperative summary>`. Push, and open or update the PR titled
    `[BL-NNNN] <title>` that links the item and maps each acceptance criterion to the code
    or test that covers it. Set `pr:` on the item.

@@ -98,6 +98,35 @@ ones: check that `git status` in the worktree is clean and that the branch is me
 report it instead. `git worktree prune` clears entries whose folder is gone. Remote branches are
 left to the product owner.
 
+### Checkpoints and interrupted runs
+
+A usage limit or an API error can cut an agent off in the middle of its work, and anything it only
+held in its head or left uncommitted is lost. So **every agent that changes files saves as it goes**:
+
+- **Commit and push at every checkpoint**, not at the end. A checkpoint is: failing tests written, one
+  acceptance criterion done or verified, one finding recorded, one spec section or ADR written, one
+  test file added. `WIP` commits are fine, history is cleaned at merge. Push the item's branch each time.
+- **Log every checkpoint** in the item's *Log*: `YYYY-MM-DD HH:MM role: checkpoint: <done so far>;
+  next: <what remains>`. The Log, not the agent's memory, is the record of progress, and it is what a
+  replacement agent continues from. Reviewers and QA write their findings and per-criterion results to the
+  Log as they go, never only in the final report.
+- **Never leave a criterion unrecorded**: QA logs `criterion N: pass|fail, evidence` right after checking
+  it, then commits and pushes.
+
+When an agent stops without its final report (usage limit, error), the orchestrator **resumes, it does
+not restart**:
+
+1. Run `node tools/save-wip.mjs <worktree> --item BL-NNNN --role <role>`: it commits everything the
+   agent left in its worktree as a WIP commit and pushes it (never on `main`, never forcing, refusing
+   files that look like secrets).
+2. Read the item's *Log* and `git log origin/main..` to see what was done.
+3. Send the same agent a message to continue; if it cannot be resumed, start a new agent of the same role
+   with: "continue from the Log and the commits on the branch; do not redo what is checkpointed".
+4. After every agent run (finished or not), the worktree must be clean and pushed before the next
+   step starts. `save-wip.mjs` checks that too.
+
+The product owner only has to say "continue" when the limit resets.
+
 ## Conventions
 
 - **IDs**: backlog items `BL-NNNN`, ADRs `ADR-NNNN`. Take the next free number.

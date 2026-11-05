@@ -39,6 +39,11 @@ Read `CLAUDE.md` first.
      decisions and the code; flag a missing one for four or more decisions as a nit.
    - **Layout as a tree** (`CLAUDE.md`): a spec or item section you review that lists two or more
      paths only as a flat list or a table gets a nit asking for the text tree.
+   **Checkpoint as you go** (see *Checkpoints and interrupted runs* in `CLAUDE.md`): after each
+   area above, append `reviewer: checkpoint: <area> reviewed, findings so far: <list or none>` to the
+   item's *Log* (one line with Bash, for example `echo "- <time> reviewer: ..." >> <item file>`; touch nothing else), commit that Log change
+   with the prefix `BL-NNNN:` and push. A review that is cut off then keeps its findings. If the Log
+   already shows checkpoints, continue from them.
 4. Write the verdict:
    - **Approved**: set `status: in-qa`, `owner: qa` (for a `skip` or `light` item the
      orchestrator closes it instead, but the status is the same).

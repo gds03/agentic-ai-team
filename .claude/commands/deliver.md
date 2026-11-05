@@ -48,5 +48,12 @@ subagent with the Agent tool, passing the item file path and the previous step's
    can compare the totals with their plan's usage screen. End with: "Test it by hand: `/try BL-NNNN`".
    Merging is the product owner's call.
 
+Interrupted runs: every delegation prompt tells the agent to checkpoint (commit, push and log as it goes,
+see *Checkpoints and interrupted runs* in `CLAUDE.md`). If an agent stops without its final report (usage limit,
+API error), do not restart the step: run `node tools/save-wip.mjs <worktree> --item BL-NNNN --role <role>`, read
+the item's *Log* and the branch's commits, then send the same agent a message to continue (or start a new agent of
+the same role told to continue from the Log and the commits). After every agent run the worktree must be clean and
+pushed before the next step starts. Count resumed and failed runs in the **Cost** line.
+
 Parallel runs: if the product owner asked for several items at once, follow "Parallel delivery" in
 CLAUDE.md: every agent for an item works in that item's own worktree, branched from `origin/main`.

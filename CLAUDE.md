@@ -196,6 +196,12 @@ left to the product owner.
   ```
 
   Format in [`docs/backlog/README.md`](docs/backlog/README.md).
+- **Key decisions diagram**: an epic, or an item whose *Design* lists four or more key decisions, adds a
+  short text diagram after that list showing how the decisions fit together (layers, flow, or what each
+  one protects against). Same format limits as the goal diagram (about 12 lines, 80 columns, plain text).
+  Draw it so it reads top to bottom: one direction, numbered steps or parts, the data each step
+  receives written inside its box, no side or upward arrows. It is optional below four decisions: do not draw one that only restates a sentence. The architect
+  writes and updates it; the reviewer checks it against the decisions and the code.
 - **Decisions**: anything hard to reverse (framework, database, auth, public API shape)
   gets an ADR, status `proposed` until the product owner accepts it.
 

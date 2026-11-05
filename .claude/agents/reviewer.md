@@ -35,6 +35,8 @@ Read `CLAUDE.md` first.
      mechanism of three or more classes.
    - **Goal diagram** (`CLAUDE.md`): the item's *Goal* ends with a short diagram that matches what
      the PR actually solves; a missing or misleading one is a nit.
+   - **Key decisions diagram** (`CLAUDE.md`): when the item has one, check it matches the listed
+     decisions and the code; flag a missing one for four or more decisions as a nit.
    - **Layout as a tree** (`CLAUDE.md`): a spec or item section you review that lists two or more
      paths only as a flat list or a table gets a nit asking for the text tree.
 4. Write the verdict:

@@ -18,11 +18,16 @@ pr:
 
 <!-- Why this matters, from the user's point of view. -->
 
-<!-- Then a short text diagram (code block, <= ~10 lines) of what we are trying to solve, e.g.:
+<!-- Then a goal diagram (code block, <= ~12 lines, top to bottom, see CLAUDE.md "Goal diagram"):
 
 ```
-Today:   <who> --does--> <thing> --> <what goes wrong or is missing>
-After:   <who> --does--> <thing> --> <what is now true>
+ TODAY       <the problem or what is missing>
+   |
+   v
+ THIS ITEM   <the work>
+   |
+   v
+ AFTER       <what is true once it is done>
 ```
 -->
 

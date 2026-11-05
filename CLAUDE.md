@@ -180,19 +180,27 @@ left to the product owner.
   files, because nesting them would rename public API. Apply it to new code and to code you
   touch anyway; do not refactor untouched files for it.
 - **Goal diagram** (so the product owner sees the problem at a glance): the *Goal* section of every
-  backlog item ends with a short text diagram in a code block that illustrates what we are trying to
-  solve: who or what is involved, what goes wrong or is missing today, and what is true after the item
-  (`Today` / `Problem` / `After`, or a before-and-after flow). At most about 10 lines of 80 characters,
-  plain text so it renders everywhere including `tools/docs.mjs`, in the product's words rather than class
-  names. The text of the Goal stays; the diagram illustrates it and does not replace it. The scrum master
-  or architect writes it when the item is created, the architect updates it if the design changes what
-  is being solved, and the reviewer flags a missing or misleading one. Example:
+  backlog item ends with a short text diagram in a code block, in three named steps that read top to
+  bottom: `TODAY` (the problem or what is missing), `THIS ITEM` (the work), `AFTER` (what is true once it
+  is done). Arrows only show the order; details go inside the steps, never as sentences on an arrow. At
+  most about 12 lines of 80 characters, plain text so it renders everywhere including `tools/docs.mjs`,
+  in the product's words rather than class names. The text of the Goal stays; the diagram illustrates it
+  and does not replace it. Epic: `TODAY` the problem, `THIS ITEM` the children, `AFTER` the outcome. Bug:
+  `TODAY` the failing path, `AFTER` the expected one. Research or architecture: `TODAY` the question,
+  `THIS ITEM` the decision, `AFTER` what it unblocks. The scrum master or architect writes it when the
+  item is created, the architect updates it if the design changes what is being solved, and the reviewer
+  flags a missing or misleading one. Example:
 
   ```
-  Today:  Customer A --book 10:00--> [check free] -----> [save]  both succeed
-          Customer B --book 10:00--> [check free] -----> [save]  = double booking
-  After:  Customer A --book 10:00--> [take lock] [check] [save] [release]
-          Customer B --book 10:00--> [wait for lock ....] [check: taken] -> no
+   TODAY   Calendar, service-menu and Square items would each invent their own
+     |     tables. They could disagree, and nothing stops bad data, e.g.
+     |       - a booking pointing at another shop's service
+     v       - two bookings for the same person at the same time
+   THIS ITEM   one set of tables for the whole calendar
+     |         (shop rules, services, staff, schedules, bookings, ...)
+     v
+   AFTER   the database itself refuses invalid rows, references to another
+           shop and double-booked staff
   ```
 
   Format in [`docs/backlog/README.md`](docs/backlog/README.md).

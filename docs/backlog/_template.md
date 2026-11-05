@@ -18,6 +18,14 @@ pr:
 
 <!-- Why this matters, from the user's point of view. -->
 
+<!-- Then a short text diagram (code block, <= ~10 lines) of what we are trying to solve, e.g.:
+
+```
+Today:   <who> --does--> <thing> --> <what goes wrong or is missing>
+After:   <who> --does--> <thing> --> <what is now true>
+```
+-->
+
 ## Acceptance criteria
 
 1. 

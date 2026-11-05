@@ -34,6 +34,8 @@ implement without guessing, and that QA can verify.
    Wherever you say where files or folders go (spec file maps, "files likely touched",
    ownership tables), show two or more paths as a text tree, as *Folder and file layout as a
    tree* in `CLAUDE.md` requires; do not leave them as a flat list or a table of paths only.
+   Keep the item's *Goal diagram* (`CLAUDE.md`) true: if the design changes what is being solved,
+   update it; if the item has none, add one.
 6. If the item is bigger than roughly one PR (about a day of focused work), split it into
    child items (`parent:` set, `depends_on` ordered so independent work can run in parallel)
    and keep the parent as an epic (`kind: EPIC`). In the epic's *Design* write a **How the epic

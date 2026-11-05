@@ -27,6 +27,16 @@ design, code, review and testing. The rules they follow are in [`CLAUDE.md`](../
    files appear on their own, and links between `.md` files open inside the viewer.
 6. **Merge** — review the PR summary and QA report, then merge.
 
+## When the usage limit cuts a session off
+
+Agents save as they go: they commit, push and write a *Log* line at every checkpoint (a criterion
+checked, a test file added, a spec section written), so a cut-off loses at most the last small step. When
+the limit resets, just say **"continue"**. The orchestrator runs `node tools/save-wip.mjs` on the
+interrupted worktree (it commits and pushes whatever was left, never on `main`), reads the item's *Log*
+and resumes the same agent from there. You never need to start the item over. To save a worktree by
+hand: `node tools/save-wip.mjs .claude/worktrees/<name> --item BL-NNNN --dry-run` shows what it would
+commit; drop `--dry-run` to do it. Rules: *Checkpoints and interrupted runs* in [`CLAUDE.md`](../CLAUDE.md).
+
 ## In the Claude project (parallel threads)
 
 Each thread is an independent session with its own branch, so you get real parallelism:

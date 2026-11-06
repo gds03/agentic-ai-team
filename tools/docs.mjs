@@ -8,14 +8,26 @@
 // One dropdown per area, shown as a tree (backlog children under their parent, ADRs under their
 // backlog item); pick an item to jump into it. New, renamed or edited files show up on
 // their own (the page polls the server every 2s), and links between .md files work in the viewer.
-// Read-only, binds to localhost, serves only .md files inside the repository.
+//
+// Work in progress in other git worktrees shows up too, the same way tools/board.mjs does it: the
+// first worktree of `git worktree list` is the base, and for every other worktree the .md files its
+// branch added or changed (committed since the merge base, edited, or new) override the base copy or
+// are added. Those entries carry a branch badge (and "uncommitted" when the worktree has uncommitted
+// changes), "new on branch", the status drift ("done on branch, designed on main") and "also in
+// <branch>" when two worktrees change one file (the first worktree's copy is shown). A toggle shows
+// only them; links in a worktree's document open that worktree's copy first, then the base.
+// Outside git, or with no other worktree, only this checkout is read, exactly as before.
+//
+// Read-only, binds to localhost and answers only requests addressed to 127.0.0.1 or localhost; serves
+// only .md files really inside the repository or one of its worktrees (symlinks and junctions leading
+// out are refused). A git call that hangs is stopped after 10 s and that worktree is skipped.
 // No dependencies, Node 18+. This is team tooling, not part of the product.
 
-import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, realpathSync, statSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { dirname, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { spawn } from 'node:child_process';
+import { execFile, spawn } from 'node:child_process';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
@@ -30,20 +42,33 @@ const AREAS = [
   { id: 'research', label: 'Research', dir: 'docs/research' },
   { id: 'other', label: 'Other', files: ['CLAUDE.md', 'docs/PLAN.md', 'docs/TEAM.md'] },
 ];
-const SKIP_DIRS = new Set(['node_modules', '.git', 'bin', 'obj', '.board']);
+const SKIP_DIRS = new Set(['node_modules', '.git', 'bin', 'obj', '.board']); // lower case: compared case-insensitively
 
 // ---------- scanning ----------
 const posix = (p) => p.split(sep).join('/');
+const isMd = (p) => p.toLowerCase().endsWith('.md');
+// Windows and macOS file systems ignore case, so BIN/ and Node_Modules/ are skipped too.
+const skipped = (segment) => SKIP_DIRS.has(segment.toLowerCase());
+// The walk's rule: a .md file whose folders are neither dot folders nor SKIP_DIRS.
+const listable = (p) => isMd(p) && p.split('/').slice(0, -1).every((s) => s && !skipped(s) && !s.startsWith('.'));
+// Symlinks and junctions: a file counts only when its real path is inside the real path of its
+// checkout (`realTop` = real(top), computed once per scan). False when the file does not exist.
+const real = (p) => { try { return realpathSync.native(p); } catch { return null; } };
+const within = (realTop, abs) => { const r = real(abs); return !!r && !!realTop && r.startsWith(realTop + sep); };
+// Folder paths compared the way the OS does (case-insensitive on Windows).
+const samePath = process.platform === 'win32' ? (p) => resolve(p).toLowerCase() : (p) => resolve(p);
+// Area a path belongs to: a file directly in an area folder, one of the named files, else 'other'.
+const areaOf = (p) => (AREAS.find((a) => (a.files ? a.files.includes(p) : p.startsWith(`${a.dir}/`) && !p.slice(a.dir.length + 1).includes('/'))) ?? AREAS.at(-1)).id;
 
-function listMd(dir) {
-  const abs = join(root, dir);
+function listMd(top, dir) {
+  const abs = join(top, dir);
   let names;
   try { names = readdirSync(abs); } catch { return []; }
-  return names.filter((n) => n.toLowerCase().endsWith('.md')).sort().map((n) => `${dir}/${n}`);
+  return names.filter(isMd).sort().map((n) => `${dir}/${n}`);
 }
 
-function describe(path) {
-  const abs = join(root, path);
+function describe(top, path) {
+  const abs = join(top, path);
   const text = readFileSync(abs, 'utf8');
   const m = text.match(/^---\r?\n([\s\S]*?)\r?\n---/);
   const fm = {};
@@ -59,43 +84,182 @@ function describe(path) {
   let parent = fm.parent || '';
   if (!fm.id && !parent) { const adr = file.match(/^(BL-\d+)-ADR\d+/); if (adr) parent = adr[1]; }
   // priority as the board shows it (P2 when a backlog item names none); other documents have none
-  return { path, file, title, id: fm.id || '', kind: fm.kind || '', parent, status: fm.status || '', priority: fm.id ? fm.priority || 'P2' : '', mtime: statSync(abs).mtimeMs };
+  return { path, ref: path, file, title, id: fm.id || '', kind: fm.kind || '', parent, status: fm.status || '', priority: fm.id ? fm.priority || 'P2' : '', mtime: statSync(abs).mtimeMs };
 }
 
-function scan() {
+// Every .md the viewer lists in one checkout: the area folders and files, then any other .md outside
+// dot folders (so .claude/worktrees is never read as part of the base), SKIP_DIRS and the folders in
+// `nested` (other worktrees placed inside this one). Files whose real path leaves `top` are left out.
+function scanTree(top, nested = new Set()) {
+  const realTop = real(top);
   const areas = AREAS.map((a) => {
-    const paths = a.files ? a.files.filter((f) => { try { statSync(join(root, f)); return true; } catch { return false; } }) : listMd(a.dir);
-    return { id: a.id, label: a.label, items: paths.map(describe) };
+    const paths = (a.files ? a.files.filter((f) => existsSync(join(top, f))) : listMd(top, a.dir)).filter((p) => within(realTop, join(top, p)));
+    return { id: a.id, label: a.label, items: paths.map((p) => describe(top, p)) };
   });
   // anything else with .md that no area claims (e.g. a README in a new folder) still gets a home
   const claimed = new Set(areas.flatMap((a) => a.items.map((i) => i.path)));
   const extra = [];
   (function walk(dir) {
     for (const e of readdirSync(dir, { withFileTypes: true })) {
-      if (e.isDirectory()) { if (!SKIP_DIRS.has(e.name) && !e.name.startsWith('.')) walk(join(dir, e.name)); }
-      else if (e.name.toLowerCase().endsWith('.md')) {
-        const p = posix(relative(root, join(dir, e.name)));
-        if (!claimed.has(p)) extra.push(describe(p));
+      // isDirectory() is false for symlinks and junctions, so the walk never follows them
+      if (e.isDirectory()) { if (!skipped(e.name) && !e.name.startsWith('.') && !nested.has(samePath(join(dir, e.name)))) walk(join(dir, e.name)); }
+      else if (isMd(e.name) && within(realTop, join(dir, e.name))) {
+        const p = posix(relative(top, join(dir, e.name)));
+        if (!claimed.has(p)) extra.push(describe(top, p));
       }
     }
-  })(root);
+  })(top);
   if (extra.length) areas.find((a) => a.id === 'other').items.push(...extra.sort((a, b) => a.path.localeCompare(b.path)));
-  const version = areas.flatMap((a) => a.items).map((i) => `${i.path}:${i.mtime}`).join('|');
-  return { areas, version };
+  return areas;
+}
+
+// Same order as scanTree: area folders by file name, 'other' = the named files first, then the rest.
+function sortArea(area) {
+  const named = AREAS.find((a) => a.id === area.id).files;
+  if (!named) { area.items.sort((x, y) => (x.path < y.path ? -1 : x.path > y.path ? 1 : 0)); return; }
+  const rank = (p) => { const n = named.indexOf(p); return n < 0 ? named.length : n; };
+  area.items.sort((x, y) => rank(x.path) - rank(y.path) || x.path.localeCompare(y.path));
+}
+
+// ---------- worktrees (the approach of tools/board.mjs) ----------
+// Asynchronous, so the git calls of all worktrees run side by side and the server stays responsive.
+// A git that hangs (a worktree on a network drive that went away, a lock) is killed after 10 s; the
+// call then fails like any other and the caller skips that worktree.
+const GIT_TIMEOUT_MS = 10000;
+const git = (cwd, ...a) => new Promise((ok, fail) => execFile('git', a, { cwd, encoding: 'utf8', windowsHide: true, maxBuffer: 64 << 20, timeout: GIT_TIMEOUT_MS }, (e, out) => (e ? fail(e) : ok(out))));
+
+// The last list git gave us: used when `git worktree list` fails or times out in a repository that
+// had worktrees a moment ago, so a slow git does not turn every worktree's document into a 404.
+let lastWorktrees = null;
+async function listWorktrees() {
+  try {
+    lastWorktrees = (await git(root, 'worktree', 'list', '--porcelain')).trim().split(/\r?\n\r?\n/).map((block) => {
+      const path = block.match(/^worktree (.+)$/m)?.[1];
+      if (!path || /^bare$/m.test(block)) return null;
+      return { path: resolve(path), branch: block.match(/^branch refs\/heads\/(.+)$/m)?.[1] ?? '(detached)', head: block.match(/^HEAD (\w+)$/m)?.[1] };
+    }).filter(Boolean);
+    return lastWorktrees;
+  } catch {
+    return lastWorktrees ?? []; // not a git repository (or git failed before it ever answered)
+  }
+}
+
+// The base (first worktree, or this checkout outside git / with no other worktree) and the other
+// worktrees, each with a key for URLs: its branch name (git forbids ':' and '~' in branch names, so
+// the 'key:path' refs the page uses stay unambiguous and the '~n' suffix cannot clash with a branch).
+async function worktrees() {
+  const wts = (await listWorktrees()).filter((w) => existsSync(w.path));
+  if (wts.length < 2) return { base: { path: root, branch: '', head: '' }, others: [], nested: new Set() };
+  const [base, ...rest] = wts;
+  const nested = new Set(rest.map((w) => samePath(w.path))); // never walked as part of another checkout
+  const used = new Set();
+  const others = rest.map((w) => {
+    let key = w.branch === '(detached)' ? `detached-${(w.head ?? '').slice(0, 7)}` : w.branch;
+    for (let n = 2; used.has(key); n++) key = `${key.replace(/~\d+$/, '')}~${n}`;
+    used.add(key);
+    return { ...w, key };
+  });
+  return { base, others, nested };
+}
+
+// .md paths a worktree changed relative to the base: committed since the merge base with the base's
+// HEAD, edited, or new and untracked (as board.mjs). `paths` is null when the histories share no
+// commit; then every file counts. `uncommitted` holds the paths with uncommitted changes.
+// Starting git costs ~50 ms on Windows, so what only depends on commits (the merge base, the files the
+// branch's commits changed) is remembered: those commits never change. Each poll then runs one
+// `git status` per worktree. Only answers are remembered: when compute fails (git timed out, a lock),
+// nothing is stored, the worktree is skipped for this poll and the next poll asks again.
+const memo = new Map();
+async function once(key, compute) {
+  if (!memo.has(key)) { const value = await compute(); if (memo.size > 1000) memo.clear(); memo.set(key, value); }
+  return memo.get(key);
+}
+async function changedFiles(wt, base) {
+  const from = await once(`base:${wt.head}:${base.head}`, async () => {
+    try { return (await git(wt.path, 'merge-base', 'HEAD', base.head)).trim() || null; }
+    catch (e) { if (e.code === 1 && !e.killed && !e.signal) return null; throw e; } // exit code 1 = no common ancestor (unrelated history)
+  });
+  // one `git status` gives the dirty flag, the edited files and the untracked ones (like `ls-files --others`)
+  const [statusOut, committed] = await Promise.all([
+    git(wt.path, 'status', '--porcelain', '-uall', '-z'),
+    from ? once(`diff:${from}:${wt.head}`, () => git(wt.path, 'diff', '--name-only', '-z', from, wt.head, '--')) : '',
+  ]);
+  const status = statusOut.split('\0');
+  const uncommitted = new Set();
+  for (let i = 0; i < status.length; i++) {
+    const e = status[i];
+    if (!e) continue;
+    uncommitted.add(e.slice(3));
+    if (/[RC]/.test(e.slice(0, 2))) i++; // a rename or copy is followed by its old path
+  }
+  const dirty = uncommitted.size > 0;
+  if (!from) return { dirty, uncommitted, paths: null };
+  return { dirty, uncommitted, paths: new Set([...committed.split('\0').filter(Boolean), ...uncommitted]) };
+}
+
+// Documents of the base, overridden or extended by what each other worktree is changing. Scanned
+// once per request, so worktrees added or removed while the viewer runs are picked up by the next poll.
+async function scan() {
+  const { base, others, nested } = await worktrees();
+  // git for every worktree at once; a worktree that is gone, broken or too slow is skipped (null)
+  const changes = await Promise.all(others.map((wt) => changedFiles(wt, base).catch(() => null)));
+  const areas = scanTree(base.path, nested);
+  const byPath = new Map(areas.flatMap((a) => a.items.map((i) => [i.path, i])));
+  const list = [];
+  for (const [n, wt] of others.entries()) {
+    const changed = changes[n];
+    if (!changed) continue;
+    const info = { key: wt.key, branch: wt.branch, path: posix(wt.path), dirty: changed.dirty, count: 0 };
+    list.push(info);
+    const realTop = real(wt.path);
+    const paths = changed.paths
+      ? [...changed.paths].filter((p) => listable(p) && within(realTop, join(wt.path, p))) // exists, and not through a junction out of the worktree
+      : scanTree(wt.path, nested).flatMap((a) => a.items.map((i) => i.path));
+    for (const p of paths.sort()) {
+      info.count++; // documents this worktree changes, including the ones another worktree shows
+      const shown = byPath.get(p);
+      if (shown?.wt) { shown.conflict = [...(shown.conflict ?? []), wt.branch]; continue; } // first worktree wins
+      let doc;
+      try { doc = describe(wt.path, p); } catch { continue; } // removed between the git call and now
+      const item = { ...doc, ref: `${wt.key}:${p}`, wt: wt.key, inBase: !!shown, baseStatus: shown?.status ?? '', uncommitted: changed.uncommitted.has(p) };
+      const area = areas.find((a) => a.id === areaOf(p));
+      if (shown) area.items.splice(area.items.indexOf(shown), 1, item); else area.items.push(item);
+      byPath.set(p, item);
+    }
+  }
+  if (list.length) areas.forEach(sortArea);
+  const version = areas.flatMap((a) => a.items).map((i) => `${i.ref}:${i.mtime}:${i.baseStatus ?? ''}:${i.uncommitted ?? ''}:${i.conflict ?? ''}`).join('|') +
+    `#${JSON.stringify(list.map((w) => [w.key, w.path, w.dirty, w.count]))}`;
+  return { areas, version, base: list.length ? { branch: base.branch, path: posix(base.path) } : null, worktrees: list };
+}
+
+// The folder to serve a file from: the base, or the worktree with that key (null when there is none).
+async function topFor(key) {
+  const { base, others } = await worktrees();
+  return key ? others.find((w) => w.key === key)?.path ?? null : base.path;
 }
 
 // ---------- server ----------
 const send = (res, code, type, body) => { res.writeHead(code, { 'Content-Type': `${type}; charset=utf-8`, 'Cache-Control': 'no-store' }); res.end(body); };
+// Only requests addressed to this server by name: a web page on another site that points its own host
+// name at 127.0.0.1 (DNS rebinding) sends its name in Host and is refused.
+const HOSTS = new Set([`127.0.0.1:${port}`, `localhost:${port}`]);
 
-const server = createServer((req, res) => {
+const server = createServer(async (req, res) => {
+  if (!HOSTS.has((req.headers.host ?? '').toLowerCase())) return send(res, 403, 'text/plain', 'forbidden host');
   const url = new URL(req.url, 'http://localhost');
   try {
     if (url.pathname === '/') return send(res, 200, 'text/html', PAGE);
-    if (url.pathname === '/api/index') return send(res, 200, 'application/json', JSON.stringify(scan()));
+    if (url.pathname === '/api/index') return send(res, 200, 'application/json', JSON.stringify(await scan()));
     if (url.pathname === '/api/file') {
+      // ?path=<repo-relative .md>[&wt=<worktree key>]: only .md files inside the base or a listed worktree
       const rel = url.searchParams.get('path') ?? '';
-      const abs = resolve(root, rel);
-      if (!rel.toLowerCase().endsWith('.md') || !abs.startsWith(root + sep) || abs.split(sep).some((s) => SKIP_DIRS.has(s))) return send(res, 403, 'text/plain', 'forbidden');
+      const top = await topFor(url.searchParams.get('wt') ?? '');
+      if (!top) return send(res, 404, 'text/plain', 'no such worktree');
+      const abs = resolve(top, rel);
+      if (!isMd(rel) || !abs.startsWith(top + sep) || relative(top, abs).split(sep).some(skipped)) return send(res, 403, 'text/plain', 'forbidden');
+      if (!existsSync(abs)) return send(res, 404, 'text/plain', 'not found');
+      if (!within(real(top), abs)) return send(res, 403, 'text/plain', 'forbidden'); // a symlink or junction leading out
       try { return send(res, 200, 'text/plain', readFileSync(abs, 'utf8')); } catch { return send(res, 404, 'text/plain', 'not found'); }
     }
     send(res, 404, 'text/plain', 'not found');
@@ -154,6 +318,16 @@ header h1{font-size:16px;margin:0 6px 6px 0;align-self:center}
 .grp{padding:12px 14px 4px;font:600 12px system-ui,sans-serif;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
 .grp:not(:first-child){border-top:1px solid var(--line);margin-top:6px}
 .live{margin-left:auto;font-size:12px;color:var(--muted);align-self:center}
+.flags{display:flex;flex-wrap:wrap;gap:4px}
+.row .flags{margin-top:4px}
+.flag{font:500 11px/1.5 system-ui,sans-serif;border-radius:4px;padding:0 6px;white-space:nowrap;text-transform:none;letter-spacing:0}
+.flag.wt{background:color-mix(in srgb,var(--accent) 15%,transparent);color:var(--accent)}
+.flag.warn{background:color-mix(in srgb,var(--warn) 15%,transparent);color:var(--warn)}
+.flag.bad{background:color-mix(in srgb,var(--bad) 15%,transparent);color:var(--bad)}
+.wts{flex-basis:100%;display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center;font-size:12px;color:var(--muted)}
+.wts[hidden]{display:none}
+.wts label{display:flex;align-items:center;gap:5px;color:var(--ink);cursor:pointer;margin-right:6px}
+.doc-flags{margin:6px 0 0}
 main{max-width:1700px;margin:0 auto;padding:20px 16px 80px}
 article{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 28px 28px;overflow-wrap:anywhere}
 .epiclink{margin:14px 0 0;font-size:13px}
@@ -171,12 +345,43 @@ hr{border:0;border-top:1px solid var(--line);margin:1.6em 0}
 img{max-width:100%}ul,ol{padding-left:1.5em}li.task{list-style:none;margin-left:-1.3em}li.task input{margin-right:.5em}
 .empty{color:var(--muted);padding:40px 0;text-align:center}
 </style></head><body>
-<header><h1>Project docs</h1><div id="picks"></div><span class="live" id="live">connecting…</span></header>
+<header><h1>Project docs</h1><div id="picks"></div><span class="live" id="live">connecting…</span><div class="wts" id="wts" hidden></div></header>
 <main><article id="doc"><p class="empty">Pick a document from one of the lists above.</p></article></main>
 <script>
 const $=(s)=>document.querySelector(s);
 const esc=(s)=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 let index=null,current=null,currentText=null;
+// current is a ref: 'docs/x.md' for the base copy, '<worktree key>:docs/x.md' for a worktree's copy
+let onlyWt=localStorage.getItem('docs.onlyWt')==='1';
+const all=()=>index.areas.flatMap(a=>a.items);
+const splitRef=(ref)=>{const k=ref.indexOf(':');return k<0?{wt:'',path:ref}:{wt:ref.slice(0,k),path:ref.slice(k+1)}};
+const itemOf=(ref)=>index&&all().find(i=>i.ref===ref);
+
+// ---------- worktree badges (as on the board) ----------
+const wtOf=(i)=>i&&i.wt?index.worktrees.find(w=>w.key===i.wt):null;
+function drift(i){
+  if(!i.wt)return '';
+  if(!i.inBase)return 'new on branch';
+  return i.id&&i.baseStatus&&i.status!==i.baseStatus?i.status+' on branch, '+i.baseStatus+' on '+(index.base.branch||'base'):'';
+}
+function flags(i,inDoc){
+  const w=wtOf(i);if(!w)return '';
+  const d=drift(i);
+  return '<span class="flag wt" title="'+esc(w.path)+(w.dirty?' (uncommitted changes)':'')+'">⎇ '+esc(w.branch)+(w.dirty?' · ● uncommitted':'')+'</span>'+
+    (inDoc&&i.uncommitted?'<span class="flag warn">this file is not committed yet</span>':'')+
+    (d?'<span class="flag warn">'+esc(d)+'</span>':'')+
+    (i.conflict?'<span class="flag bad">also in '+esc(i.conflict.join(', '))+'</span>':'');
+}
+// The list of other worktrees and the "only in other worktrees" toggle; hidden when there are none.
+function buildWts(){
+  const el=$('#wts');
+  if(!index.worktrees.length){el.hidden=true;el.innerHTML='';return}
+  el.hidden=false;
+  el.innerHTML='<label title="Show only documents that other worktrees add or change"><input type="checkbox" id="onlywt"'+(onlyWt?' checked':'')+'> Only in other worktrees</label>'+
+    '<span>base ⎇ '+esc(index.base.branch||'(detached)')+' · other worktrees:</span>'+
+    index.worktrees.map(w=>'<span class="flag wt" title="'+esc(w.path)+'">⎇ '+esc(w.branch)+' · '+w.count+' doc'+(w.count===1?'':'s')+(w.dirty?' · ● uncommitted':'')+'</span>').join('');
+  $('#onlywt').onchange=(e)=>{onlyWt=e.target.checked;localStorage.setItem('docs.onlyWt',onlyWt?'1':'0');buildPicks()};
+}
 
 // ---------- markdown ----------
 function inline(s){
@@ -230,33 +435,44 @@ function md(src){
   }
   return out;
 }
-function render(text,path){
+// Where a link to a .md path goes from a document in worktree wt: that worktree's copy if it changes
+// the file, else the base copy, else (a file only another worktree has) that worktree's copy.
+function linkRef(path,wt){
+  const items=index?all():[];
+  if(wt&&items.some(i=>i.wt===wt&&i.path===path))return wt+':'+path;
+  if(items.some(i=>i.path===path&&(!i.wt||i.inBase)))return path;
+  const other=items.find(i=>i.path===path);
+  return other?other.ref:path;
+}
+function render(text,ref){
+  const {wt,path}=splitRef(ref);
   let fm='';
   const m=text.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/);
   if(m){fm='<div class="fm">'+m[1].split(/\r?\n/).map(l=>{const kv=l.match(/^([A-Za-z_]+):\s*(.*)$/);return kv?'<div><b>'+esc(kv[1])+'</b><span>'+esc(kv[2])+'</span></div>':''}).join('')+'</div>';text=m[2]}
   const el=$('#doc');
   // a story whose parent is an epic gets a link to that epic on top
-  const me=index&&index.areas.flatMap(a=>a.items).find(i=>i.path===path);
-  const epic=me&&me.parent&&index.areas.flatMap(a=>a.items).find(i=>i.id===me.parent&&(i.kind==='EPIC'||/^BL-\d+-EPIC-/.test(i.file)));
-  const up=epic?'<p class="epiclink">↑ Epic: <a class="epic" href="#'+encodeURIComponent(epic.path)+'">'+esc(epic.id+' · '+epic.title)+'</a></p>':'';
-  el.innerHTML=up+'<p class="path">'+esc(path)+'</p>'+fm+md(text);
+  const me=itemOf(ref);
+  const epic=me&&me.parent&&all().find(i=>i.id===me.parent&&(i.kind==='EPIC'||/^BL-\d+-EPIC-/.test(i.file)));
+  const up=epic?'<p class="epiclink">↑ Epic: <a class="epic" href="#'+encodeURIComponent(epic.ref)+'">'+esc(epic.id+' · '+epic.title)+'</a></p>':'';
+  const badges=me?flags(me,true):'';
+  el.innerHTML=up+'<p class="path">'+esc(path)+'</p>'+(badges?'<div class="flags doc-flags">'+badges+'</div>':'')+fm+md(text);
   // links to other .md files stay inside the viewer; other relative links are shown as text
   const base=path.split('/').slice(0,-1);
   el.querySelectorAll('a[href]:not(.epic)').forEach(a=>{
     const h=a.getAttribute('href');
     if(/^(https?:|mailto:)/.test(h)){a.target='_blank';a.rel='noopener';return}
     const [file,hash]=h.split('#');
-    if(!file){a.setAttribute('href','#'+encodeURIComponent(path)+(hash?'/'+hash:''));return}
+    if(!file){a.setAttribute('href','#'+encodeURIComponent(ref)+(hash?'/'+hash:''));return}
     const parts=file.startsWith('/')?[]:base.slice();
     for(const p of decodeURI(file).split('/')){if(p==='..')parts.pop();else if(p&&p!=='.')parts.push(p)}
     const target=parts.join('/');
-    if(/\.md$/i.test(target))a.setAttribute('href','#'+encodeURIComponent(target));
+    if(/\.md$/i.test(target))a.setAttribute('href','#'+encodeURIComponent(linkRef(target,wt)));
     else{a.removeAttribute('href');a.style.color='var(--muted)';a.title=target}
   });
 }
 
 // ---------- navigation ----------
-function areaOf(path){return index&&index.areas.find(a=>a.items.some(i=>i.path===path))}
+function areaOf(ref){return index&&index.areas.find(a=>a.items.some(i=>i.ref===ref))}
 // Items of an area as rows of a tree: children sit under their parent (epic > child > sub-child), drawn
 // with box characters. A parent that is not in this area (an ADR's backlog item) becomes a group
 // heading; an item without a known parent is a root.
@@ -277,9 +493,9 @@ function rowsOf(area){
     c.forEach((k,n)=>walk(k,depth?trail.concat(last?'   ':'│  '):[],n===c.length-1,depth+1));
   }
   const list=(items)=>items.forEach(i=>walk(i,[],true,0));
-  const all=index.areas.flatMap(a=>a.items);
+  const everything=all();
   list(roots);
-  for(const [p,items] of groups){const owner=all.find(i=>i.id===p);rows.push({group:p+(owner?' · '+owner.title:'')});list(items)}
+  for(const [p,items] of groups){const owner=everything.find(i=>i.id===p);rows.push({group:p+(owner?' · '+owner.title:'')});list(items)}
   // members of a parent cycle are never reached from a root: still list them
   const left=area.items.filter(i=>!seen.has(i));
   if(left.length){rows.push({group:'Other'});list(left)}
@@ -289,21 +505,27 @@ function rowHtml(r){
   if(r.group)return '<div class="grp">'+esc(r.group)+'</div>';
   const i=r.item,m=i.file.match(/^(BL-\d+)(.*)$/);
   const name=m?'<b>'+esc(m[1])+'</b>'+esc(m[2]):esc(i.file);
-  const q=[i.file,i.title,i.id,i.status,i.priority].join(' ').toLowerCase();
-  return '<div class="row" role="option" tabindex="-1" data-path="'+esc(i.path)+'" data-q="'+esc(q)+'"><span class="tree">'+esc(r.prefix)+'</span><span class="name">'+name+'</span>'+
+  const w=wtOf(i),badges=flags(i,false);
+  const q=[i.file,i.title,i.id,i.status,i.priority,w?w.branch:''].join(' ').toLowerCase();
+  return '<div class="row" role="option" tabindex="-1" data-ref="'+esc(i.ref)+'" data-q="'+esc(q)+'"><span class="tree">'+esc(r.prefix)+'</span><span class="name">'+name+(badges?'<span class="flags">'+badges+'</span>':'')+'</span>'+
     (i.priority?'<span class="prio p-'+esc(i.priority)+'">'+esc(i.priority)+'</span>':'')+
     (i.status?'<span class="st st-'+esc(i.status)+'">'+esc(i.status)+'</span>':'')+'</div>';
 }
 // One dropdown per area: a button that opens a panel with roomy, larger rows.
 function buildPicks(){
+  buildWts();
   const wrap=$('#picks');wrap.style.display='contents';
-  wrap.innerHTML=index.areas.filter(a=>a.items.length).map(a=>'<div class="pick" data-a="'+a.id+'"><span class="lbl">'+esc(a.label)+' ('+a.items.length+')</span>'+
+  // with the toggle on, each dropdown keeps only the entries from other worktrees (a parent outside
+  // that set becomes a group heading, so the tree still reads)
+  const only=onlyWt&&index.worktrees.length>0;
+  const areas=index.areas.map(a=>only?{...a,items:a.items.filter(i=>i.wt)}:a).filter(a=>a.items.length);
+  wrap.innerHTML=(only&&!areas.length?'<span class="pick">nothing in other worktrees yet</span>':'')+areas.map(a=>'<div class="pick" data-a="'+a.id+'"><span class="lbl">'+esc(a.label)+' ('+a.items.length+')</span>'+
     '<button type="button" class="dd" aria-haspopup="listbox" aria-expanded="false"><span class="ddt">— select —</span><span class="car">▾</span></button>'+
     '<div class="panel" role="listbox" hidden><div class="find"><input type="search" placeholder="Search (id, title, status, P0...)" aria-label="Search '+esc(a.label)+'" autocomplete="off" spellcheck="false"></div>'+
     rowsOf(a).map(rowHtml).join('')+'<div class="nomatch" hidden>No match</div></div></div>').join('');
   wrap.onclick=(e)=>{
     const b=e.target.closest('.dd');if(b){togglePanel(b.closest('.pick'));return}
-    const r=e.target.closest('.row');if(r){location.hash=encodeURIComponent(r.dataset.path);closePanels()}
+    const r=e.target.closest('.row');if(r){location.hash=encodeURIComponent(r.dataset.ref);closePanels()}
   };
   wrap.oninput=(e)=>{if(e.target.matches('.find input'))filterPanel(e.target.closest('.pick'),e.target.value)};
   wrap.onkeydown=(e)=>{
@@ -367,25 +589,39 @@ function markActive(){
   const a=current&&areaOf(current);
   document.querySelectorAll('.pick').forEach(p=>{
     const on=!!a&&p.dataset.a===a.id;p.classList.toggle('active',on);
-    p.querySelectorAll('.row').forEach(r=>r.classList.toggle('sel',on&&r.dataset.path===current));
-    const item=on&&a.items.find(i=>i.path===current);
+    p.querySelectorAll('.row').forEach(r=>r.classList.toggle('sel',on&&r.dataset.ref===current));
+    const item=on&&a.items.find(i=>i.ref===current);
     p.querySelector('.ddt').textContent=item?item.file:'— select —';
   });
 }
-async function open(path,force){
-  if(path===current&&!force)return;
-  const r=await fetch('/api/file?path='+encodeURIComponent(path));
-  if(!r.ok){$('#doc').innerHTML='<p class="empty">Cannot open '+esc(path)+' ('+r.status+')</p>';return}
+async function open(ref,force){
+  if(ref===current&&!force)return;
+  const {wt,path}=splitRef(ref);
+  const r=await fetch('/api/file?path='+encodeURIComponent(path)+(wt?'&wt='+encodeURIComponent(wt):''));
+  if(!r.ok){
+    // the worktree went away (merged and removed): show the copy the index has now, if any
+    const now=wt&&index&&all().find(i=>i.path===path);
+    if(now&&now.ref!==ref){location.replace('#'+encodeURIComponent(now.ref));return}
+    $('#doc').innerHTML='<p class="empty">Cannot open '+esc(path)+(wt?' in worktree '+esc(wt):'')+' ('+r.status+')</p>';return}
   const text=await r.text();
-  const moved=path!==current;current=path;
-  if(!moved&&text===currentText)return;
-  const y=window.scrollY;currentText=text;render(text,path);markActive();
+  const moved=ref!==current;current=ref;
+  // badges can change (worktree dirty, status on base) without the text changing
+  const sig=text+'\u0000'+(index?flags(itemOf(ref)||{},true):'');
+  if(!moved&&sig===currentText)return;
+  const y=window.scrollY;currentText=sig;render(text,ref);markActive();
   document.title=path.split('/').pop().replace(/\.md$/i,'')+' · Project docs';
   window.scrollTo(0,moved?0:y);
 }
+// The hash is a ref, optionally followed by '/<heading anchor>'. A branch name may itself contain
+// '.md/' (y.md/z:docs/x.md), so the ref ends at the LAST '.md' that is followed by '/' or the end.
+function refOfHash(h){
+  const lower=h.toLowerCase();
+  for(let k=lower.lastIndexOf('.md');k>=0;k=k?lower.lastIndexOf('.md',k-1):-1){const c=h[k+3];if(c===undefined||c==='/')return h.slice(0,k+3)}
+  return '';
+}
 function route(){
-  const h=decodeURIComponent(location.hash.slice(1)).replace(/(\.md)\/.*$/i,'$1');
-  if(/\.md$/i.test(h))open(h);
+  const ref=refOfHash(decodeURIComponent(location.hash.slice(1)));
+  if(ref)open(ref);
 }
 addEventListener('hashchange',route);
 document.addEventListener('click',(e)=>{if(!e.target.closest('.pick'))closePanels()});
@@ -399,6 +635,8 @@ async function poll(){
       if(first)route();else if(current)open(current,true);
     }
   }catch(e){$('#live').textContent='server stopped — restart node tools/docs.mjs'}
+  // the next poll starts 2s after this one answered, so a slow scan never piles up requests
+  setTimeout(poll,2000);
 }
-poll();setInterval(poll,2000);
+poll();
 </script></body></html>`;

@@ -24,7 +24,11 @@ design, code, review and testing. The rules they follow are in [`CLAUDE.md`](../
    timestamps, writes `.board/index.html` (not committed), and needs only Node 18+.
    To *read* the documents themselves, run `node tools/docs.mjs --open`: a viewer with one
    dropdown each for backlog, specs, ADRs and research (plus other docs). New and edited
-   files appear on their own, and links between `.md` files open inside the viewer.
+   files appear on their own, and links between `.md` files open inside the viewer. Like the
+   board, it also shows what agents are writing in their own git worktrees before the PR merges:
+   every spec, ADR, research note or item a worktree's branch added or changed is listed with a
+   branch badge (and "uncommitted" while that worktree has unsaved work), and "Only in other
+   worktrees" narrows the lists to that work in flight.
 6. **Merge** — review the PR summary and QA report, then merge.
 
 ## When the usage limit cuts a session off

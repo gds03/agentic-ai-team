@@ -68,6 +68,12 @@ branch, designed on main until the PR merges). The "In flight by worktree" panel
 So agents must keep an item's `status` and *Log* current in their own worktree. `--dir` reads one
 folder only.
 
+The docs viewer (`node tools/docs.mjs`) does the same for every document it lists, not only items:
+the backlog, specs, ADRs, research notes and other `.md` files that a worktree's branch added or
+changed replace the base copy (or are added), with the branch badge, the "uncommitted" marker, the
+status drift flag and an "also in <branch>" flag when two worktrees change the same file. Its
+"Only in other worktrees" toggle shows just that work in flight.
+
 ## Frontmatter fields
 
 | Field | Values | Notes |

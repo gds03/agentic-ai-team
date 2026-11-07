@@ -50,6 +50,8 @@ Read `CLAUDE.md` first.
    - Also judge the item's `qa` tier. You may raise it (e.g. `light` to `full` because a
      criterion has no automated test, or the change touches auth or a schema), never lower it.
      For `light`, name in the *Log* which test covers each criterion.
+   - Also judge `qa_scope` against the diff: if it touches the kernel, `DbContext`, migrations, DI,
+     infrastructure or `ShopKit.Base`, or files outside the slice, raise it (`area` or `full`), never lower it.
    - **Changes requested**: set `status: in-progress`, `owner: developer`.
    Append a *Log* line, and list findings as `file:line — problem — suggested fix`,
    each marked **must-fix** or **nit**. Only must-fix items block approval.

@@ -89,6 +89,7 @@ status drift flag and an "also in <branch>" flag when two worktrees change the s
 | `owner` | role currently holding it | e.g. `developer` |
 | `blocked` | `true` \| `false` | `true` when waiting on the product owner |
 | `qa` | `skip` \| `light` \| `full` | QA tier, see below. Missing or unclear means `full` |
+| `qa_scope` | `slice` \| `area` \| `full` | Which tests run locally, see *Test scope* below. Missing means `slice` |
 | `spec` | path or empty | e.g. `docs/specs/booking.md` |
 | `pr` | URL or empty | Set by the developer |
 
@@ -110,6 +111,25 @@ Rules:
   was changed in the PR without the reviewer noting why.
 - `BUG` items found by QA, and items touching auth, tenancy or money, are never below `light`.
 - Whoever closes a `skip` or `light` item logs the tier and the evidence per criterion in the *Log*.
+
+## Test scope
+
+The `qa` tier says *how much QA effort* an item gets; `qa_scope` says *which tests run locally* while
+doing it. The full suite (including Testcontainers integration tests) is slow, and it already runs in CI
+on every pull request, so agents run only what the item touched. The architect proposes `qa_scope`, the
+product owner confirms it at pre-flight, and the reviewer may raise it (never lower it).
+
+| Scope | Use when | Developer and QA run locally |
+|---|---|---|
+| `slice` (default) | The change stays inside one slice's folder and its mirrored tests | Build, plus the tests of that slice (e.g. `--filter-namespace "*Features.Services.ManageServices*"`) |
+| `area` | Touches an area's `Shared` folder or several slices of one area | Build, plus the tests of that area |
+| `full` | Touches the kernel, the shared `DbContext`, migrations, DI registration, infrastructure or `ShopKit.Base` | Build, plus the full suite |
+
+Rules:
+- Slices never use each other's types, so a change confined to one slice cannot break another; that is why `slice` is safe as the default.
+- CI runs the full suite on every PR, and it must be green before the product owner merges. Nobody else repeats it.
+- Whoever runs a reduced scope logs the filter they used in the *Log*.
+- A `qa_scope` below what the diff touches is a reviewer finding.
 
 ## Sections
 

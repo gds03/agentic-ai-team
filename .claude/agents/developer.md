@@ -21,8 +21,9 @@ Implement exactly one backlog item.
    Put data-only types (request/response records, DTOs) as nested types of one
    `<UseCase>Data` holder class in `<UseCase>Data.cs`; types with logic get their own file
    (see *Data carriers versus logic* in `CLAUDE.md`).
-4. Write unit tests alongside the code. Run the build and the full test suite (commands are
-   in `CLAUDE.md`); everything must pass. **Checkpoint as you go** (see *Checkpoints and
+4. Write unit tests alongside the code. Run the build and the tests for the item's `qa_scope`
+   (default `slice`, see *Test scope* in `docs/backlog/README.md`; commands are in `CLAUDE.md`);
+   everything must pass. CI runs the full suite on the PR, so do not run it locally unless the scope is `full`. **Checkpoint as you go** (see *Checkpoints and
    interrupted runs* in `CLAUDE.md`): commit and push the branch when the failing tests are written,
    then after each criterion or slice is done, and append a *Log* line `developer: checkpoint: <done>;
    next: <remaining>` each time. If the Log already shows checkpoints, continue from them.

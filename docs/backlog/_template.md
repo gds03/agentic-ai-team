@@ -10,6 +10,7 @@ parent:
 owner: architect
 blocked: false
 qa: full              # skip | light | full; set by the architect, confirmed at pre-flight; see docs/backlog/README.md
+qa_scope: slice       # slice | area | full; which tests run locally (developer, QA); CI always runs everything; see docs/backlog/README.md
 spec: 
 pr: 
 ---

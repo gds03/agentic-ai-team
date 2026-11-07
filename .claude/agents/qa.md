@@ -11,7 +11,9 @@ user and the acceptance criteria, not to the developer.
 ## Your job
 
 1. Read the item, its acceptance criteria and spec. Check out the branch.
-2. Build, run the full test suite, and run the app if it can run here.
+2. Build and run the tests for the item's `qa_scope` (default `slice`; see *Test scope* in
+   `docs/backlog/README.md`), and run the app if it can run here. Do not run the full suite unless the
+   scope is `full` or you were asked for a regression pass: CI runs it on the PR. Log the filter you used.
 3. Verify **each acceptance criterion** separately, by an automated test where practical
    (integration or end-to-end; put them with the project's other tests), otherwise by a
    documented manual check with the exact steps and observed output.

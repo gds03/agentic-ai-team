@@ -14,7 +14,9 @@ subagent with the Agent tool, passing the item file path and the previous step's
    looks off (empty plan, vague criteria, conflicting items, unaccepted ADRs). Then ask
    whether to proceed, adjust the item first, or review the overall direction instead.
    Include the item's **QA tier** (`qa:` field, see `docs/backlog/README.md`) with a one-line
-   reason, and let the product owner change it. If the field is empty, propose one. Start
+   reason, and let the product owner change it. If the field is empty, propose one. Do the same
+   for the **test scope** (`qa_scope:` `slice` | `area` | `full`): show it with a one-line reason
+   (which folders the item touches), default `slice`. Start
    step 1 only after an explicit yes. Approval covers this item only; ask again next time.
 1. Find the item file in `docs/backlog/` for $ARGUMENTS (match on the ID prefix, `docs/backlog/BL-NNNN-*.md`, since filenames carry a
    KIND tag). Check its `depends_on` items are
@@ -37,8 +39,10 @@ subagent with the Agent tool, passing the item file path and the previous step's
    - `skip`: do not spawn an agent. Confirm the reviewer approved and build and tests are green.
    For `light` and `skip`, set `status: done`, append a *Log* line `scrum-master: QA <tier>,
    <evidence per criterion>`, and say in the report that no QA agent ran.
+   Developer and QA run only the tests for the item's `qa_scope`; CI runs the full suite on the PR,
+   and the report says whether CI is green.
 6. Report: final status, PR link, the QA result per acceptance criterion (and the QA tier
-   used), any new items or open questions created, and any deviation from the criteria that
+   and test scope used), any new items or open questions created, and any deviation from the criteria that
    the product owner has not accepted yet. Add a **Cost** line: for every agent run of this
    pipeline (resumed and failed runs included) its tokens and duration from its completion
    notification (`subagent_tokens`, `duration_ms`), then the item total and the wall-clock time from

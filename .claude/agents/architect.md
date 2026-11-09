@@ -33,7 +33,10 @@ implement without guessing, and that QA can verify.
    and table described in *Dependency diagram* in `CLAUDE.md` (BL-0099 is the example).
    Wherever you say where files or folders go (spec file maps, "files likely touched",
    ownership tables), show two or more paths as a text tree, as *Folder and file layout as a
-   tree* in `CLAUDE.md` requires; do not leave them as a flat list or a table of paths only.
+   tree* in `CLAUDE.md` requires; do not leave them as a flat list or a table of paths only. When
+   the tree shows what the item changes, mark each entry `++` new, `--` removed, `>>`
+   moved/renamed (note `was <old>`), `~~` edited, and end with the legend line; never use the
+   words NEW/MOVED/CHANGED in place of the markers.
    Keep the item's *Goal diagram* (`CLAUDE.md`) true: if the design changes what is being solved,
    update it; if the item has none, add one.
    When an epic or item lists four or more key decisions, add a *Key decisions diagram*

@@ -34,7 +34,25 @@ It works at any point once the item has a branch or PR (in review, in QA or done
    - what cannot be tested by hand yet because a later item builds it, and any known
      deviation the product owner has not accepted yet (name it so they can decide);
    - a closing line asking them to report anything that surprises them.
-6. **Say how to finish:** the app stops when they say so (stop it, then confirm nothing listens
+6. **Save the script to the item.** Write the same script into the item file as a collapsed
+   section, placed after *Design* and before *Open questions* (replace the block if a previous
+   `/try` left one). It must start closed, so never add `open`:
+
+   ```
+   <details>
+   <summary>Manual test script (from /try)</summary>
+
+   (setup, numbered steps with expected results and criterion tags, hard-to-reach states,
+   known gaps: exactly what you gave the product owner)
+
+   </details>
+   ```
+
+   Append a *Log* line (`date '+%Y-%m-%d %H:%M'`): `orchestrator: /try wrote the manual test
+   script`. This edits only the item's markdown file, in the item's own worktree. Leave it
+   uncommitted unless the product owner asks you to commit it. On a merged item, edit it on the
+   default branch the same way.
+7. **Say how to finish:** the app stops when they say so (stop it, then confirm nothing listens
    on the port); the worktree you created is removed with `git worktree remove` only when they
    ask. Do not merge; merging is the product owner's call.
 

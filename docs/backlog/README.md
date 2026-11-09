@@ -142,6 +142,11 @@ Rules:
   unblocks. Example in `CLAUDE.md` (*Goal diagram*).
 - **Acceptance criteria**: numbered, testable. QA verifies each one.
 - **Design**: filled by the architect: approach, contracts, files likely touched.
+- **Manual test script**: optional, written by `/try` after *Design* and before *Open questions*, so
+  the click-by-click steps stay with the item. It is a collapsed `<details>` block
+  (`<summary>Manual test script (from /try)</summary>`, no `open` attribute), so it renders closed on
+  GitHub and in `tools/docs.mjs`. `/try` replaces the block on each run (it is regenerated from the
+  criteria and Log, not append-only) and records that in the *Log*.
 - **Open questions**: for the product owner. Unanswered questions block the item.
 - **Log**: append-only, one line per hand-off: `YYYY-MM-DD HH:MM role: what happened`.
   Time is 24-hour local time of the machine; read it from the system (`date '+%Y-%m-%d %H:%M'`)

@@ -40,6 +40,16 @@ pr:
 
 <!-- Architect: approach, contracts/interfaces, data changes, files likely touched, test strategy. -->
 
+<!-- Manual test script: added by /try, not by hand. Keep it closed:
+
+<details>
+<summary>Manual test script (from /try)</summary>
+
+...
+
+</details>
+-->
+
 ## Open questions
 
 <!-- For the product owner. Mark answered ones with the answer and date. -->

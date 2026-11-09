@@ -339,6 +339,8 @@ h1,h2,h3,h4{line-height:1.3;margin:1.6em 0 .5em}h1{font-size:1.7em;margin-top:.8
 a{color:var(--accent)}
 code{background:var(--code);padding:.1em .35em;border-radius:4px;font:.88em ui-monospace,Consolas,monospace}
 pre{background:var(--code);padding:12px 14px;border-radius:8px;overflow:auto}pre code{background:none;padding:0}
+#doc details{margin:1em 0;padding:.4em 1em;border:1px solid var(--quote);border-radius:6px}
+#doc details>summary{cursor:pointer;font-weight:600}
 blockquote{margin:1em 0;padding:.1em 1em;border-left:4px solid var(--quote);color:var(--muted)}
 table{border-collapse:collapse;display:block;overflow:auto;margin:1em 0}th,td{border:1px solid var(--line);padding:5px 10px;text-align:left;vertical-align:top}th{background:var(--code)}
 hr{border:0;border-top:1px solid var(--line);margin:1.6em 0}
@@ -421,6 +423,12 @@ function md(src){
     const l=L[i];
     if(!l.trim()){i++;continue}
     let m;
+    if(m=l.match(/^\s*<details(\s+open)?\s*>\s*$/i)){
+      // collapsible block: <details> [<summary>title</summary>] markdown </details> (nesting not supported)
+      const open=!!m[1];i++;const buf=[];while(i<L.length&&!/^\s*<\/details>\s*$/i.test(L[i]))buf.push(L[i++]);i++;
+      let title='Details';const s=buf.findIndex(x=>/<summary>/i.test(x));
+      if(s>=0){const t=buf[s].match(/<summary>(.*?)<\/summary>/i);if(t){title=t[1];buf.splice(s,1)}}
+      out+='<details'+(open?' open':'')+'><summary>'+inline(title)+'</summary>'+md(buf.join('\n'))+'</details>';continue}
     if(m=l.match(/^\s*(\x60{3,}|~{3,})\s*(\S*)/)){const f=m[1];i++;const buf=[];while(i<L.length&&!L[i].trim().startsWith(f))buf.push(L[i++]);i++;out+='<pre><code>'+esc(buf.join('\n'))+'</code></pre>';continue}
     if(m=l.match(/^(#{1,6})\s+(.*?)\s*#*$/)){out+='<h'+m[1].length+'>'+inline(m[2])+'</h'+m[1].length+'>';i++;continue}
     if(/^\s*([-*_]\s*){3,}$/.test(l)){out+='<hr>';i++;continue}

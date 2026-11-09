@@ -38,7 +38,9 @@ Read `CLAUDE.md` first.
    - **Key decisions diagram** (`CLAUDE.md`): when the item has one, check it matches the listed
      decisions and the code; flag a missing one for four or more decisions as a nit.
    - **Layout as a tree** (`CLAUDE.md`): a spec or item section you review that lists two or more
-     paths only as a flat list or a table gets a nit asking for the text tree.
+     paths only as a flat list or a table gets a nit asking for the text tree. A tree that shows
+     changes must use the `++` `--` `>>` `~~` markers and a legend, and match what the diff really
+     adds, removes, moves and edits; words like NEW/MOVED/CHANGED instead of markers get a nit.
    **Checkpoint as you go** (see *Checkpoints and interrupted runs* in `CLAUDE.md`): after each
    area above, append `reviewer: checkpoint: <area> reviewed, findings so far: <list or none>` to the
    item's *Log* (one line with Bash, for example `echo "- <time> reviewer: ..." >> <item file>`; touch nothing else), commit that Log change

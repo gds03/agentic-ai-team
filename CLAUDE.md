@@ -184,7 +184,27 @@ The product owner only has to say "continue" when the limit resets.
   tests or docs live and names two or more paths, it shows them as a text tree in a code block
   (`├─`, `└─`, `│`, one entry per line, a short note after the entry where it helps, and the owning
   item ID where several items own parts). A table of paths alone is not enough; it may stay beside
-  the tree for the columns a tree cannot carry (owner, reason). A single path in a sentence is fine
+  the tree for the columns a tree cannot carry (owner, reason). When the tree shows a **change**
+  (what an item adds, removes, moves or edits), every changed entry carries a marker right after
+  its branch (`├─ ++ Name.cs`), and an unchanged entry carries none:
+  `++` new file or folder, `--` removed, `>>` moved or renamed (the note says `was <old path or
+  name>`), `~~` edited in place (the note says what changes). A moved folder is marked once on the
+  folder; its unchanged children need no marker. A tree that uses markers ends with a one-line
+  legend (`++ new  -- removed  >> moved/renamed  ~~ edited`). Do not write `NEW`, `MOVED` or
+  `CHANGED` as words in the note instead of the marker. Example:
+  ```
+  Features/ServiceMenu/
+  ├─ _Shared/
+  │  ├─ >> ActiveServiceNames.cs     was ManageServices/ActiveServiceNames.cs
+  │  └─ ++ ServiceFormData.cs        carriers moved out of ManageServicesData
+  ├─ ManageServices/
+  │  ├─ ~~ ManageServicesPage.razor  template link, empty state
+  │  └─ -- OldHelper.cs              replaced by _Shared
+  └─ ++ StartFromTemplate/
+     └─ ++ StartFromTemplatePage.razor
+  ++ new  -- removed  >> moved/renamed  ~~ edited
+  ```
+  A single path in a sentence is fine
   as inline code. Apply it to new work and to sections you touch anyway; do not backfill untouched
   files.
 - **Architecture**: the application is built as **vertical slices**. Each use case

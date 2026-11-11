@@ -18,6 +18,9 @@
 // only them; links in a worktree's document open that worktree's copy first, then the base.
 // Outside git, or with no other worktree, only this checkout is read, exactly as before.
 //
+// Every list row and every open document shows when the file was last written (its modified time on disk,
+// in local time); the page updates it on its own, also when a file is saved without its text changing.
+//
 // Read-only, binds to localhost and answers only requests addressed to 127.0.0.1 or localhost; serves
 // only .md files really inside the repository or one of its worktrees (symlinks and junctions leading
 // out are refused). A git call that hangs is stopped after 10 s and that worktree is skipped.
@@ -307,6 +310,8 @@ header h1{font-size:16px;margin:0 6px 6px 0;align-self:center}
 .row .name{flex:1;min-width:0;overflow-wrap:anywhere}
 .row .name b{font-weight:650}
 .row .st{flex:none;font-size:11px;padding:2px 9px;border-radius:999px;background:var(--code);color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.row .when{flex:none;font:12px ui-monospace,Consolas,monospace;color:var(--muted);white-space:nowrap}
+.written{font-size:12px;color:var(--muted);margin:4px 0 0}.written b{font-weight:600;color:inherit}
 .row .prio{flex:none;font-size:10px;font-weight:700;border-radius:4px;padding:1px 5px;border:1px solid var(--line);color:var(--muted)}
 .row .p-P0{color:var(--bad);border-color:var(--bad)}.row .p-P1{color:var(--warn);border-color:var(--warn)}
 .find{position:sticky;top:-8px;z-index:1;margin:-8px -8px 6px;padding:10px 8px 8px;background:var(--panel);border-bottom:1px solid var(--line)}
@@ -356,6 +361,11 @@ let index=null,current=null,currentText=null;
 // current is a ref: 'docs/x.md' for the base copy, '<worktree key>:docs/x.md' for a worktree's copy
 let onlyWt=localStorage.getItem('docs.onlyWt')==='1';
 const all=()=>index.areas.flatMap(a=>a.items);
+// when a file was last written: local time, and how long ago (the ago texts refresh every 30s)
+const pad=(n)=>String(n).padStart(2,'0');
+function fmtAt(ms){const d=new Date(ms);return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+' '+pad(d.getHours())+':'+pad(d.getMinutes())}
+function fmtAgo(ms){const s=Math.max(0,Math.round((Date.now()-ms)/1000));if(s<60)return 'just now';const m=Math.floor(s/60);if(m<60)return m+' min ago';const h=Math.floor(m/60);if(h<24)return h+' h ago';const d=Math.floor(h/24);return d+(d===1?' day ago':' days ago')}
+setInterval(()=>document.querySelectorAll('[data-ago]').forEach(e=>{e.textContent=fmtAgo(+e.dataset.ago)}),30000);
 const splitRef=(ref)=>{const k=ref.indexOf(':');return k<0?{wt:'',path:ref}:{wt:ref.slice(0,k),path:ref.slice(k+1)}};
 const itemOf=(ref)=>index&&all().find(i=>i.ref===ref);
 
@@ -463,7 +473,7 @@ function render(text,ref){
   const epic=me&&me.parent&&all().find(i=>i.id===me.parent&&(i.kind==='EPIC'||/^BL-\d+-EPIC-/.test(i.file)));
   const up=epic?'<p class="epiclink">↑ Epic: <a class="epic" href="#'+encodeURIComponent(epic.ref)+'">'+esc(epic.id+' · '+epic.title)+'</a></p>':'';
   const badges=me?flags(me,true):'';
-  el.innerHTML=up+'<p class="path">'+esc(path)+'</p>'+(badges?'<div class="flags doc-flags">'+badges+'</div>':'')+fm+md(text);
+  el.innerHTML=up+'<p class="path">'+esc(path)+'</p>'+(badges?'<div class="flags doc-flags">'+badges+'</div>':'')+(me&&me.mtime?'<p class="written">Last written <b>'+fmtAt(me.mtime)+'</b> · <span data-ago="'+me.mtime+'">'+fmtAgo(me.mtime)+'</span></p>':'')+fm+md(text);
   // links to other .md files stay inside the viewer; other relative links are shown as text
   const base=path.split('/').slice(0,-1);
   el.querySelectorAll('a[href]:not(.epic)').forEach(a=>{
@@ -516,6 +526,7 @@ function rowHtml(r){
   const w=wtOf(i),badges=flags(i,false);
   const q=[i.file,i.title,i.id,i.status,i.priority,w?w.branch:''].join(' ').toLowerCase();
   return '<div class="row" role="option" tabindex="-1" data-ref="'+esc(i.ref)+'" data-q="'+esc(q)+'"><span class="tree">'+esc(r.prefix)+'</span><span class="name">'+name+(badges?'<span class="flags">'+badges+'</span>':'')+'</span>'+
+    (i.mtime?'<span class="when" title="Last written '+fmtAt(i.mtime)+'">'+fmtAt(i.mtime)+'</span>':'')+
     (i.priority?'<span class="prio p-'+esc(i.priority)+'">'+esc(i.priority)+'</span>':'')+
     (i.status?'<span class="st st-'+esc(i.status)+'">'+esc(i.status)+'</span>':'')+'</div>';
 }
@@ -614,7 +625,7 @@ async function open(ref,force){
   const text=await r.text();
   const moved=ref!==current;current=ref;
   // badges can change (worktree dirty, status on base) without the text changing
-  const sig=text+'\u0000'+(index?flags(itemOf(ref)||{},true):'');
+  const sig=text+'\u0000'+(index?flags(itemOf(ref)||{},true)+'\u0000'+((itemOf(ref)||{}).mtime||''):'');
   if(!moved&&sig===currentText)return;
   const y=window.scrollY;currentText=sig;render(text,ref);markActive();
   document.title=path.split('/').pop().replace(/\.md$/i,'')+' · Project docs';

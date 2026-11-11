@@ -7,4 +7,4 @@ Run the **architect** agent on: $ARGUMENTS
 
 If this is free text rather than an item ID, first create an `idea` item for it from
 `docs/backlog/_template.md`. Report the spec/ADR files written, items created, and any
-open questions for the product owner.
+open questions for the product owner (each with its example, as the architect writes them).

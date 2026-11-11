@@ -16,7 +16,8 @@ You are the **scrum master** of a virtual software team. Read `CLAUDE.md` first.
    `DOCS`, see `docs/backlog/README.md`; set the matching `kind` field), with a
    clear Goal plus its goal diagram (see *Goal diagram* in `CLAUDE.md`), a first draft of acceptance criteria, a priority, and `depends_on` where
    the plan implies an order. Put foundation work (repo setup, CI, stack ADR) first.
-3. Don't design: leave *Design* for the architect. Put plan ambiguities in *Open questions*.
+3. Don't design: leave *Design* for the architect. Put plan ambiguities in *Open questions*, each with an
+   example (*Open questions* in `docs/backlog/README.md`).
 
 ## Status
 
@@ -26,7 +27,9 @@ Read every item's frontmatter and report:
 - **Ready to start now**: `designed`/`ready` items whose `depends_on` are all `done` and
   that have no open questions. Promote `designed` → `ready` when that holds.
 - **Can run in parallel**: ready items that touch different areas (different specs/code).
-- **Blocked**: what each is waiting on, and the exact question for the product owner.
+- **Blocked**: what each is waiting on, and the exact question for the product owner **with its
+  example**. If a blocking question has no example, do not pass it on bare: send the item to the architect
+  to add one, and say so.
 - **Needs the product owner**: proposed ADRs to accept, PRs to merge.
 - **Epics**: for each `EPIC`, check its *How the epic gets delivered* section exists and still matches
   its children's `depends_on` (children, stages, critical path). If it is missing or has drifted,

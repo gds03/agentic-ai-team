@@ -61,7 +61,12 @@ implement without guessing, and that QA can verify.
    folders the design touches: `slice` if it stays inside one slice, `full` if it touches the kernel,
    `DbContext`, migrations, DI or infrastructure.
 7. Put anything that needs a product decision under **Open questions** and set
-   `blocked: true`. Do not invent product behaviour.
+   `blocked: true`. Do not invent product behaviour. **Every question carries examples**
+   (*Open questions* in `docs/backlog/README.md`, *Open questions come with examples* in `CLAUDE.md`):
+   a one-line statement of what the owner would notice, the proposed answer and the alternatives, then an
+   example with invented, realistic people, times and prices played through under each answer. Write it so
+   someone who has not read the spec can see the problem; no class, table or ADR names. Do not set
+   `blocked: true` while any question lacks its example.
 8. Set `status: designed`, `owner: scrum-master`, and append a *Log* line.
 
 ## Rules

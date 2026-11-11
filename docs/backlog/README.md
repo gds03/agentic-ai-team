@@ -147,7 +147,29 @@ Rules:
   (`<summary>Manual test script (from /try)</summary>`, no `open` attribute), so it renders closed on
   GitHub and in `tools/docs.mjs`. `/try` replaces the block on each run (it is regenerated from the
   criteria and Log, not append-only) and records that in the *Log*.
-- **Open questions**: for the product owner. Unanswered questions block the item.
+- **Open questions**: for the product owner. Unanswered questions block the item. Every question has
+  **examples**, so the owner sees the real problem and decides without reading the spec:
+  - One line says what the owner would notice (screen, customer message, money, time), in product words. No
+    class, table or ADR names; a spec section is a pointer only (`spec 17`), never the explanation.
+  - Then the **proposed answer** and the **alternatives**, each in one line.
+  - Then an **Example** with invented, realistic people, times and prices, played through under the proposal
+    and under each alternative, so the difference is visible. Use two examples when one cannot show both
+    sides (the usual case and the awkward case). Keep it to a few lines; a small table is fine when the
+    answers differ by number.
+  - An answered question is rewritten as `answered by the product owner YYYY-MM-DD: <answer>`; the example
+    may then be dropped.
+
+  ```
+  1. **Q1. Block a time that already has a booking?** Marta blocks 13:00-15:00 for a dentist visit; Joana
+     is booked at 14:00 that day.
+     Proposed: allowed; Joana's booking is listed as "needs a decision" and Marta moves or cancels it.
+     Alternative: refused until Marta has moved Joana first.
+     *Example.* Proposed: Marta saves the block at 09:00, sees "1 booking affected: Joana, 14:00", and
+     messages Joana from there. Alternative: Marta gets "Move Joana's 14:00 booking first", opens the
+     day page, moves Joana, comes back and blocks again, but cannot block in a hurry at 13:30.
+  ```
+
+  A question with no example is not ready to ask: the architect adds it before setting `blocked: true`.
 - **Log**: append-only, one line per hand-off: `YYYY-MM-DD HH:MM role: what happened`.
   Time is 24-hour local time of the machine; read it from the system (`date '+%Y-%m-%d %H:%M'`)
   rather than guessing, and never edit or reorder earlier lines.

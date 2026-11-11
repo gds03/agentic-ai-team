@@ -9,8 +9,9 @@ subagent with the Agent tool, passing the item file path and the previous step's
 
 0. **Confirm before starting.** Do not delegate to any agent yet. Read the item, its spec
    and `docs/PLAN.md`, then show the product owner a short pre-flight summary: the item
-   (ID, kind, title), its goal and acceptance criteria, dependency status, open questions,
-   what the pipeline will do and which files or areas it will touch, and anything that
+   (ID, kind, title), its goal and acceptance criteria, dependency status, open questions
+   (each shown **with its example**; if one has none, have the architect add it first and never
+   show a bare question), what the pipeline will do and which files or areas it will touch, and anything that
    looks off (empty plan, vague criteria, conflicting items, unaccepted ADRs). Then ask
    whether to proceed, adjust the item first, or review the overall direction instead.
    Include the item's **QA tier** (`qa:` field, see `docs/backlog/README.md`) with a one-line
@@ -22,7 +23,8 @@ subagent with the Agent tool, passing the item file path and the previous step's
    KIND tag). Check its `depends_on` items are
    `done`. If not, stop and report what it is waiting on.
 2. If `status` is `idea`: run the **architect** agent. If it leaves open questions
-   (`blocked: true`), stop and report the questions.
+   (`blocked: true`), stop and report the questions, each with its example. A question the
+   architect left without an example goes back to the architect before you report it.
 3. Run the **developer** agent to implement and open the PR. As soon as the PR is open, tell
    the product owner they can test it by hand now with `/try BL-NNNN` (it launches the branch and
    writes the click-by-click script) while review and QA continue. Do not launch it yourself

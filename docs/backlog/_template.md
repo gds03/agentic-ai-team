@@ -52,7 +52,12 @@ pr:
 
 ## Open questions
 
-<!-- For the product owner. Mark answered ones with the answer and date. -->
+<!-- For the product owner. Every question needs an example (docs/backlog/README.md, "Open questions"):
+     1. **Q1. <what the owner would notice, in product words>.** Proposed: ... Alternative: ...
+        *Example.* <invented person, time, price> played through under the proposal and under each alternative.
+     Mark answered ones with the answer and date. -->
+
+None.
 
 ## Log
 

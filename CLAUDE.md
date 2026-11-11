@@ -259,6 +259,18 @@ The product owner only has to say "continue" when the limit resets.
   Draw it so it reads top to bottom: one direction, numbered steps or parts, the data each step
   receives written inside its box, no side or upward arrows. It is optional below four decisions: do not draw one that only restates a sentence. The architect
   writes and updates it; the reviewer checks it against the decisions and the code.
+- **Open questions come with examples**: the product owner decides without reading the spec, so every
+  question in an item's *Open questions* (and every question an agent asks them in chat or at pre-flight)
+  shows the real situation it creates. Under each question, one or more concrete examples in product words,
+  with invented but realistic people, times and prices ("Marta, a hairdresser, has a 14:00 booking and then
+  blocks 13:00-15:00..."), showing what happens under the proposed answer and under each alternative, so the
+  difference between the answers can be seen without any other context. A question states in one line what
+  the owner would notice (in the product, to the customer, in money or time), uses no class, table or ADR
+  names, and keeps the spec section number as a pointer only, never as the explanation. A question without an
+  example is not ready to ask: the architect adds it before setting `blocked: true`, the scrum master and the
+  orchestrator send it back instead of showing it, and the reviewer flags it. Format in
+  [`docs/backlog/README.md`](docs/backlog/README.md) (*Open questions*). Applies to new questions and to any
+  unanswered question in an item you touch; answered questions keep their recorded answer.
 - **Decisions**: anything hard to reverse (framework, database, auth, public API shape)
   gets an ADR, status `proposed` until the product owner accepts it.
 

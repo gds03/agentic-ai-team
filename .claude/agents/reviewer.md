@@ -35,6 +35,8 @@ Read `CLAUDE.md` first.
      mechanism of three or more classes.
    - **Goal diagram** (`CLAUDE.md`): the item's *Goal* ends with a short diagram that matches what
      the PR actually solves; a missing or misleading one is a nit.
+   - **Scannable sections** (`CLAUDE.md`): *Goal*, *Key decisions* and *Open questions* of an item the PR adds
+     or touches follow the layout in `docs/backlog/README.md`; a paragraph-sized wall of text in them is a nit.
    - **Open questions with examples** (`CLAUDE.md`): any unanswered question the PR adds or leaves in the
      item without a concrete example (invented person, time or price, played through under each answer)
      is a finding; one that explains itself with class, table or ADR names is a nit.

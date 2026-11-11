@@ -271,6 +271,12 @@ The product owner only has to say "continue" when the limit resets.
   orchestrator send it back instead of showing it, and the reviewer flags it. Format in
   [`docs/backlog/README.md`](docs/backlog/README.md) (*Open questions*). Applies to new questions and to any
   unanswered question in an item you touch; answered questions keep their recorded answer.
+- **Scannable sections**: the product owner reads them between other things, so *Goal*, *Key decisions* and *Open questions* are
+  written to be scanned: the point in bold first, one idea per short line, bullets and small tables instead of
+  paragraphs, numbers and names instead of abstractions, and one ask per question ending in "Your call:". The
+  facts do not change, only the layout. Layout per section in [`docs/backlog/README.md`](docs/backlog/README.md)
+  (*Scannable sections*); the architect writes new items this way, rewrites a section's layout when touching it,
+  and the reviewer flags a wall of text in these three sections.
 - **Decisions**: anything hard to reverse (framework, database, auth, public API shape)
   gets an ADR, status `proposed` until the product owner accepts it.
 
@@ -294,7 +300,7 @@ CLAUDE.md               this file: team workflow and conventions
 .claude/agents/         role definitions (architect, developer, reviewer, qa, scrum-master, researcher)
 .claude/commands/       slash commands that drive the workflow
 tools/board.mjs         backlog board + weekly report: `node tools/board.mjs --open` (team tooling, no deps)
-tools/docs.mjs          live markdown viewer for backlog/specs/ADRs/research: `node tools/docs.mjs --open` (no deps)
+tools/docs.mjs          live markdown viewer for backlog/specs/ADRs/research, shows when each file was last written: `node tools/docs.mjs --open` (no deps)
 docs/PLAN.md            the product plan (source of truth for scope)
 docs/backlog/           one markdown file per backlog item
 docs/specs/             feature/technical specs written by the architect

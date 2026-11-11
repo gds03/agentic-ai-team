@@ -17,7 +17,7 @@ pr:
 
 ## Goal
 
-<!-- Why this matters, from the user's point of view. -->
+<!-- Scannable (docs/backlog/README.md): **In one line:** <the goal>, then at most 3 short bullets for why. -->
 
 <!-- Then a goal diagram (code block, <= ~12 lines, top to bottom, see CLAUDE.md "Goal diagram"):
 
@@ -52,7 +52,7 @@ pr:
 
 ## Open questions
 
-<!-- For the product owner. Every question needs an example (docs/backlog/README.md, "Open questions"):
+<!-- For the product owner. Scannable blocks (docs/backlog/README.md, "Scannable sections"): "**N questions. Blocks the item.**", then per question ### Qx. <question?>, **You'd notice:**, Proposed vs Alternative table, **Example:**, **Your call:**. Every question needs an example ("Open questions"):
      1. **Q1. <what the owner would notice, in product words>.** Proposed: ... Alternative: ...
         *Example.* <invented person, time, price> played through under the proposal and under each alternative.
      Mark answered ones with the answer and date. -->

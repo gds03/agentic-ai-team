@@ -131,6 +131,27 @@ Rules:
 - Whoever runs a reduced scope logs the filter they used in the *Log*.
 - A `qa_scope` below what the diff touches is a reviewer finding.
 
+## Scannable sections
+
+The product owner reads these items between other things, so the three sections they
+read most (*Goal*, *Key decisions*, *Open questions*) are written to be scanned, not read. The facts do
+not change; only the layout. Every item follows this, new or touched.
+
+- **Short.** One idea per line, about 15 words at most. Plain words, no class, table or ADR names; spec
+  references go last, in brackets, as pointers.
+- **The point first.** Start each section with the answer or the ask in bold, then the detail.
+- **Chunked.** Bullets, numbered lists and small tables instead of paragraphs; a blank line between
+  chunks. No block of more than about 5 lines of running text.
+- **Numbers and names, not abstractions.** "40 min, 33 EUR" beats "a longer, dearer booking".
+- **One ask per block.** A question block ends with **Your call:** and the choice in one line, the proposed
+  answer first.
+
+| Section | Layout |
+|---|---|
+| **Goal** | `**In one line:**` the goal in one sentence; then at most 3 short bullets for why; then the *Goal diagram*, unchanged. |
+| **Key decisions** | A numbered list headed "The N that matter:" (N = the number of decisions). Each item: a bold decision, then at most one short line of why, then `(spec ref)`. The *Key decisions diagram*, if there is one, follows unchanged. |
+| **Open questions** | A line first: `**N questions. Blocks the item.**` (or `None.`). Then one block per question: `### Qx. <a question that ends in ?>`, `**You'd notice:**` (one line), a Proposed-versus-Alternative table (or two bullets when a table does not fit), `**Example:**` (short, invented people and numbers), an optional `**One catch:**`, then `**Your call:**`. |
+
 ## Sections
 
 - **Goal**: why, from the user's point of view, followed by a **goal diagram**: a short text diagram in a
@@ -159,14 +180,20 @@ Rules:
   - An answered question is rewritten as `answered by the product owner YYYY-MM-DD: <answer>`; the example
     may then be dropped.
 
+  Lay each question out as a short block (rules in *Scannable sections* below), not as a paragraph:
+
   ```
-  1. **Q1. Block a time that already has a booking?** Marta blocks 13:00-15:00 for a dentist visit; Joana
-     is booked at 14:00 that day.
-     Proposed: allowed; Joana's booking is listed as "needs a decision" and Marta moves or cancels it.
-     Alternative: refused until Marta has moved Joana first.
-     *Example.* Proposed: Marta saves the block at 09:00, sees "1 booking affected: Joana, 14:00", and
-     messages Joana from there. Alternative: Marta gets "Move Joana's 14:00 booking first", opens the
-     day page, moves Joana, comes back and blocks again, but cannot block in a hurry at 13:30.
+  ### Q1. Block a time that already has a booking?
+  **You'd notice:** Marta blocks 13:00-15:00; Joana is booked at 14:00.
+
+  | | Proposed: allow | Alternative: refuse |
+  |---|---|---|
+  | Marta saves the block | Sees "1 booking affected: Joana, 14:00" | Gets "Move Joana's booking first" |
+  | Then | Messages Joana from there | Moves Joana, comes back, blocks again |
+
+  **Example:** at 13:30 Marta must leave now. Proposed: block saved in one step. Alternative: she
+  cannot block in a hurry.
+  **Your call:** allow (proposed) or refuse?
   ```
 
   A question with no example is not ready to ask: the architect adds it before setting `blocked: true`.

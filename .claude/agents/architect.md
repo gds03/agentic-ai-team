@@ -37,6 +37,8 @@ implement without guessing, and that QA can verify.
    the tree shows what the item changes, mark each entry `++` new, `--` removed, `>>`
    moved/renamed (note `was <old>`), `~~` edited, and end with the legend line; never use the
    words NEW/MOVED/CHANGED in place of the markers.
+   Write *Goal*, *Key decisions* and *Open questions* in the scannable layout (*Scannable sections* in
+   `docs/backlog/README.md`): the point in bold first, short lines, bullets and small tables, one ask per question.
    Keep the item's *Goal diagram* (`CLAUDE.md`) true: if the design changes what is being solved,
    update it; if the item has none, add one.
    When an epic or item lists four or more key decisions, add a *Key decisions diagram*

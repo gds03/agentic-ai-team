@@ -318,6 +318,10 @@ header h1{font-size:16px;margin:0 6px 6px 0;align-self:center}
 .find input{width:100%;font:14px system-ui,sans-serif;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 12px;outline:none}
 .find input:focus{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
 .row[hidden],.grp[hidden]{display:none}
+.row.cl{display:none}.panel.searching .row.cl{display:flex}
+.row[data-kids] .tree{cursor:pointer;padding:6px 6px 6px 0;margin:-6px 0}
+.row .tg{display:inline-block;width:1ch;padding:0 5px;margin:0 -5px;text-align:center;font-weight:700;color:var(--accent);border-radius:4px;user-select:none}
+.row[data-kids] .tree:hover .tg{background:var(--line)}
 .nomatch{padding:14px;color:var(--muted);font-size:14px}
 .row .st-done{color:#2e9e66}.row .st-in-progress,.row .st-in-review,.row .st-in-qa{color:var(--accent)}
 .grp{padding:12px 14px 4px;font:600 12px system-ui,sans-serif;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
@@ -360,6 +364,8 @@ const esc=(s)=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
 let index=null,current=null,currentText=null;
 // current is a ref: 'docs/x.md' for the base copy, '<worktree key>:docs/x.md' for a worktree's copy
 let onlyWt=localStorage.getItem('docs.onlyWt')==='1';
+let revealed=null; // the document whose parents were last opened automatically
+const expanded=new Set(); // refs of the epics/parents opened with their + in the dropdowns (everything starts collapsed)
 const all=()=>index.areas.flatMap(a=>a.items);
 // when a file was last written: local time, and how long ago (the ago texts refresh every 30s)
 const pad=(n)=>String(n).padStart(2,'0');
@@ -506,8 +512,8 @@ function rowsOf(area){
   function walk(i,trail,last,depth){
     if(seen.has(i))return;
     seen.add(i);
-    rows.push({item:i,prefix:depth?trail.join('')+(last?'└─ ':'├─ '):''});
     const c=kids.get(i.id)||[];
+    rows.push({item:i,depth,hasKids:c.length>0,prefix:depth?trail.join('')+(last?'└─ ':'├─ '):''});
     c.forEach((k,n)=>walk(k,depth?trail.concat(last?'   ':'│  '):[],n===c.length-1,depth+1));
   }
   const list=(items)=>items.forEach(i=>walk(i,[],true,0));
@@ -525,7 +531,7 @@ function rowHtml(r){
   const name=m?'<b>'+esc(m[1])+'</b>'+esc(m[2]):esc(i.file);
   const w=wtOf(i),badges=flags(i,false);
   const q=[i.file,i.title,i.id,i.status,i.priority,w?w.branch:''].join(' ').toLowerCase();
-  return '<div class="row" role="option" tabindex="-1" data-ref="'+esc(i.ref)+'" data-q="'+esc(q)+'"><span class="tree">'+esc(r.prefix)+'</span><span class="name">'+name+(badges?'<span class="flags">'+badges+'</span>':'')+'</span>'+
+  return '<div class="row" role="option" tabindex="-1" data-ref="'+esc(i.ref)+'" data-q="'+esc(q)+'" data-d="'+r.depth+'"'+(r.hasKids?' data-kids="1"':'')+'><span class="tree">'+esc(r.prefix)+(r.hasKids?'<span class="tg" role="button" title="Show or hide the children">+</span> ':'  ')+'</span><span class="name">'+name+(badges?'<span class="flags">'+badges+'</span>':'')+'</span>'+
     (i.mtime?'<span class="when" title="Last written '+fmtAt(i.mtime)+'">'+fmtAt(i.mtime)+'</span>':'')+
     (i.priority?'<span class="prio p-'+esc(i.priority)+'">'+esc(i.priority)+'</span>':'')+
     (i.status?'<span class="st st-'+esc(i.status)+'">'+esc(i.status)+'</span>':'')+'</div>';
@@ -542,8 +548,11 @@ function buildPicks(){
     '<button type="button" class="dd" aria-haspopup="listbox" aria-expanded="false"><span class="ddt">— select —</span><span class="car">▾</span></button>'+
     '<div class="panel" role="listbox" hidden><div class="find"><input type="search" placeholder="Search (id, title, status, P0...)" aria-label="Search '+esc(a.label)+'" autocomplete="off" spellcheck="false"></div>'+
     rowsOf(a).map(rowHtml).join('')+'<div class="nomatch" hidden>No match</div></div></div>').join('');
+  wrap.querySelectorAll('.panel').forEach(applyCollapse);
   wrap.onclick=(e)=>{
     const b=e.target.closest('.dd');if(b){togglePanel(b.closest('.pick'));return}
+    const tg=e.target.closest('.tree'); // the +/- and the tree lines around it: a bigger target than the glyph alone
+    if(tg&&tg.closest('.row[data-kids]')){const row=tg.closest('.row'),k=row.dataset.ref;if(expanded.has(k))expanded.delete(k);else expanded.add(k);applyCollapse(row.closest('.panel'));return}
     const r=e.target.closest('.row');if(r){location.hash=encodeURIComponent(r.dataset.ref);closePanels()}
   };
   wrap.oninput=(e)=>{if(e.target.matches('.find input'))filterPanel(e.target.closest('.pick'),e.target.value)};
@@ -551,10 +560,15 @@ function buildPicks(){
     const p=e.target.closest('.pick');if(!p)return;
     const isOpen=p.classList.contains('open');
     if(e.key==='Escape'&&isOpen){togglePanel(p);p.querySelector('.dd').focus();return}
-    const rows=[...p.querySelectorAll('.row')].filter(r=>!r.hidden);
+    const shown=()=>[...p.querySelectorAll('.row')].filter(r=>r.offsetParent!==null);
+    const rows=shown();
+    if((e.key==='ArrowRight'||e.key==='ArrowLeft')&&e.target.classList.contains('row')&&e.target.dataset.kids){
+      const k=e.target.dataset.ref;if(e.key==='ArrowRight')expanded.add(k);else expanded.delete(k);
+      e.preventDefault();applyCollapse(p.querySelector('.panel'));return;
+    }
     if(e.key==='ArrowDown'||e.key==='ArrowUp'){
       e.preventDefault();if(!isOpen)togglePanel(p);
-      const visible=[...p.querySelectorAll('.row')].filter(r=>!r.hidden);
+      const visible=shown();
       if(!visible.length)return;
       const idx=visible.indexOf(document.activeElement);
       if(idx<0&&e.target.matches('.find input')&&e.key==='ArrowDown'){visible[0].focus();return}
@@ -574,6 +588,7 @@ function buildPicks(){
 function filterPanel(p,text){
   const words=text.toLowerCase().split(/\s+/).filter(Boolean);
   const panel=p.querySelector('.panel');
+  panel.classList.toggle('searching',words.length>0); // a search shows every match, collapsed or not
   let group=null,groupHas=false,any=false;
   const closeGroup=()=>{if(group)group.hidden=!groupHas};
   for(const el of panel.children){
@@ -585,6 +600,30 @@ function filterPanel(p,text){
   }
   closeGroup();
   panel.querySelector('.nomatch').hidden=any;
+}
+// Collapse: a row with children shows + (or - when open); the rows below it that are deeper stay hidden
+// until it is opened. A row at the same or a lower depth ends that subtree. Group headings reset it.
+function applyCollapse(panel){
+  let limit=Infinity;
+  for(const el of panel.children){
+    if(el.classList.contains('grp')){limit=Infinity;continue}
+    if(!el.classList.contains('row'))continue;
+    const d=+el.dataset.d,open=expanded.has(el.dataset.ref);
+    if(d>limit){el.classList.add('cl')}
+    else{
+      el.classList.remove('cl');limit=Infinity;
+      if(el.dataset.kids&&!open)limit=d;
+    }
+    const tg=el.querySelector('.tg');if(tg)tg.textContent=open?'−':'+';
+  }
+}
+// Opens the parents of a row so it is visible.
+function expandTo(row){
+  let d=+row.dataset.d,el=row.previousElementSibling;
+  while(el&&d>0&&!el.classList.contains('grp')){
+    if(el.classList.contains('row')&&+el.dataset.d<d){expanded.add(el.dataset.ref);d=+el.dataset.d}
+    el=el.previousElementSibling;
+  }
 }
 function closePanels(except){
   document.querySelectorAll('.pick.open').forEach(p=>{if(p===except)return;p.classList.remove('open');p.querySelector('.panel').hidden=true;p.querySelector('.dd').setAttribute('aria-expanded','false')});
@@ -600,6 +639,7 @@ function togglePanel(p){
     const box=panel.querySelector('.find input');box.value='';filterPanel(p,'');
     // show the active item: scroll it into the middle of the list (after the filter is cleared, so rows do not shift)
     const sel=panel.querySelector('.row.sel');
+    if(sel&&revealed!==current){expandTo(sel);revealed=current;applyCollapse(panel)} // once per selected document, so a collapse the user did sticks
     if(sel)panel.scrollTop=Math.max(0,sel.offsetTop-panel.clientHeight/2+sel.offsetHeight/2);
     box.focus({preventScroll:true});
   }

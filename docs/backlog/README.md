@@ -183,8 +183,9 @@ not change; only the layout. Every item follows this, new or touched.
   unblocks. Example in `CLAUDE.md` (*Goal diagram*).
 - **Acceptance criteria**: numbered, testable. QA verifies each one.
 - **Design**: filled by the architect: approach, contracts, files likely touched.
-- **Manual test script**: optional, written by `/try` after *Design* and before *Open questions*, so
-  the click-by-click steps stay with the item. It is a collapsed `<details>` block
+- **Manual test script**: written by `/deliver` after the reviewer approves and before QA (and by `/try`
+  on demand), placed after *Design* and before *Open questions*, so the click-by-click steps stay with
+  the item and the product owner can try the work themself. It is a collapsed `<details>` block
   (`<summary>Manual test script (from /try)</summary>`, no `open` attribute), so it renders closed on
   GitHub and in `tools/docs.mjs`. `/try` replaces the block on each run (it is regenerated from the
   criteria and Log, not append-only) and records that in the *Log*.

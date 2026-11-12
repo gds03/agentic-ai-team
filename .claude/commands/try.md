@@ -36,7 +36,8 @@ It works at any point once the item has a branch or PR (in review, in QA or done
    - a closing line asking them to report anything that surprises them.
 6. **Save the script to the item.** Write the same script into the item file as a collapsed
    section, placed after *Design* and before *Open questions* (replace the block if a previous
-   `/try` left one). It must start closed, so never add `open`:
+   `/try` or `/deliver` left one; `/deliver` writes a first version before QA, so refine it against the
+   running build). It must start closed, so never add `open`:
 
    ```
    <details>

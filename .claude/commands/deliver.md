@@ -43,6 +43,10 @@ subagent with the Agent tool, passing the item file path and the previous step's
    <evidence per criterion>`, and say in the report that no QA agent ran.
    Developer and QA run only the tests for the item's `qa_scope`; CI runs the full suite on the PR,
    and the report says whether CI is green.
+   After the item is set to `done` (or when it first starts), check its parent epic against the *Epic status*
+   rule in `docs/backlog/README.md`: set the epic to `in-progress` when this is its first child to start, and
+   when every sibling is `done` say in the report "BL-NNNN (epic) is ready to close" for the product owner
+   to accept. Never close an epic without that yes.
 6. Report: final status, PR link, the QA result per acceptance criterion (and the QA tier
    and test scope used), any new items or open questions created, and any deviation from the criteria that
    the product owner has not accepted yet. Add a **Cost** line: for every agent run of this

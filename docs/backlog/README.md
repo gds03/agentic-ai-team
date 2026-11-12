@@ -93,6 +93,26 @@ status drift flag and an "also in <branch>" flag when two worktrees change the s
 | `spec` | path or empty | e.g. `docs/specs/booking.md` |
 | `pr` | URL or empty | Set by the developer |
 
+## Epic status
+
+An epic is never delivered itself, so its `status` follows its children (the items whose `parent` is the
+epic). Nobody moves an epic by hand outside these rules:
+
+| Children | Epic `status` |
+|---|---|
+| none has started (all `idea`, `designed` or `ready`) | `idea` or `designed`, as the architect left it |
+| at least one is `in-progress`, `in-review`, `in-qa` or `done`, and not all are `done` | `in-progress` |
+| every child is `done` | `done` |
+
+- **Who:** the scrum master moves an epic to `in-progress` when its first child starts, and proposes `done`
+  when the last child is `done`. Accepting the epic is the product owner's call: `/deliver` and `/status` say
+  "BL-NNNN is ready to close" and the epic is set to `done` once the product owner agrees.
+- **When:** at the end of every `/deliver` (the item's parent epic is checked) and on every `/status`.
+- **Check:** `node tools/board.mjs` lists "Epics out of sync with their children" in its text report and flags
+  each epic card ("should be in-progress", "should be done"). A new child added to a `done` epic reopens it.
+- Only `kind: EPIC` items follow this rule; an item that merely has children (for example a bug split in two)
+  does not.
+
 ## QA tier
 
 QA is the most expensive step, so how much of it an item gets is decided per item. The architect

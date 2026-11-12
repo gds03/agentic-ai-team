@@ -33,7 +33,7 @@ subagent with the Agent tool, passing the item file path and the previous step's
    **developer**, then review again. Stop after 2 rounds and report if still not approved.
    **Manual test script, before QA.** Once the reviewer approves (and any fixes are done), and before
    step 5 starts, write the item's *Manual test script* block yourself, with no agent and without
-   launching the app: follow `/try` steps 5 and 6 (`.claude/commands/try.md`) from the acceptance
+   launching the app: follow `/try` steps 5 to 7 (`.claude/commands/try.md`) from the acceptance
    criteria, the *Log* and the spec, and save it into the item file after *Design*. Items with no UI or
    runtime behaviour get the short "what to read" checklist instead. Append the *Log* line
    `orchestrator: wrote the manual test script (before QA)`, then commit it on the item's branch

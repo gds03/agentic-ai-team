@@ -31,6 +31,10 @@ Read every item's frontmatter and report:
   example**. If a blocking question has no example, do not pass it on bare: send the item to the architect
   to add one, and say so.
 - **Needs the product owner**: proposed ADRs to accept, PRs to merge.
+- **Epic status**: run `node tools/board.mjs` and read "Epics out of sync with their children". Apply the
+  *Epic status* rule of `docs/backlog/README.md`: set an epic to `in-progress` when its first child has
+  started (log it); when every child is `done`, do not close it yourself, list it under **Needs the product
+  owner** as "BL-NNNN is ready to close" and set `done` once they agree.
 - **Epics**: for each `EPIC`, check its *How the epic gets delivered* section exists and still matches
   its children's `depends_on` (children, stages, critical path). If it is missing or has drifted,
   fix the ordering yourself when only `depends_on` changed, otherwise send it to the architect, and

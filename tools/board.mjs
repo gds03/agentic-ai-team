@@ -206,7 +206,18 @@ function analyse(items, weekStart, weekEnd, now) {
       return { parent: map.get(id), kids, done: kids.filter((k) => k.status === 'done').length };
     });
 
-  return { map, unmet, startable, blocked, waiting, stale, doneThisWeek, createdThisWeek, events, epics };
+  // Epic status rule (docs/backlog/README.md, "Epic status"): an epic is in-progress once one child has
+  // started and done when every child is done. Report the epics whose status says something else.
+  const notStarted = ['idea', 'designed', 'ready'];
+  const epicDrift = epics.filter((e) => e.parent?.kind === 'EPIC' && e.kids.length).map((e) => {
+    const n = e.kids.length, s = e.parent.status, started = e.kids.filter((k) => !notStarted.includes(k.status)).length;
+    if (e.done === n && s !== 'done') return { epic: e.parent, want: 'done', why: `all ${n} children are done` };
+    if (e.done < n && s === 'done') return { epic: e.parent, want: started ? 'in-progress' : 'designed', why: `${n - e.done} of ${n} children are not done` };
+    if (started && notStarted.includes(s)) return { epic: e.parent, want: 'in-progress', why: `${started} of ${n} children started or done` };
+    return null;
+  }).filter(Boolean);
+
+  return { map, unmet, startable, blocked, waiting, stale, doneThisWeek, createdThisWeek, events, epics, epicDrift };
 }
 
 function weekBounds(dateStr) {
@@ -246,6 +257,7 @@ function textReport(items, a, weekStart, weekEnd, now) {
   list('Blocked on the product owner', a.blocked, (i) => (i.questions ? `  (${i.questions} open question${i.questions > 1 ? 's' : ''})` : ''));
   list('Waiting on dependencies', a.waiting, (i) => `  (needs ${a.unmet(i).join(', ')})`);
   list(`Stale (> ${STALE_DAYS} days, in progress/review/QA)`, a.stale, (i) => `  (${i.status}, ${ago(i.lastActivity, now)})`);
+  list('Epics out of sync with their children', a.epicDrift.map((d) => d.epic), (i) => { const d = a.epicDrift.find((x) => x.epic === i); return `  is ${i.status}, should be ${d.want} (${d.why})`; });
   return L.join('\n');
 }
 
@@ -378,7 +390,7 @@ function html(items, a, weekStart, weekEnd, now, version, wts) {
           const flag = (k.blocked || k.questions) && k.status !== 'done' ? '<span class="flag bad">blocked</span>' : '';
           return `<div class="kid s-${esc(k.status)}" title="${esc(k.title)}"><div class="row"><span class="id">${esc(k.id)}</span><span class="kind k-${esc(k.kind)}">${esc(k.kind)}</span><span class="prio p-${esc(k.priority)}">${esc(k.priority)}</span><span class="st">${esc(k.status)}</span></div><div class="title">${esc(k.title)}</div>${needs.length || flag ? `<div class="flags">${flag}${needs.length ? `<span class="flag warn">needs ${esc(needs.join(', '))}</span>` : ''}</div>` : ''}</div>`;
         }).join('') || '<p class="none">no child items yet</p>';
-        return `<article class="epiccard"><div class="row"><span class="id">${esc(e.parent.id)}</span><span class="kind k-EPIC">EPIC</span><span class="st">${esc(e.parent.status)}</span><span class="meta" style="margin-left:auto">${e.done}/${n} done</span></div><div class="title wrap">${esc(e.parent.title)}</div><div class="bar"><i style="width:${p}%"></i></div>${epicNeeds.length ? `<div class="flags"><span class="flag warn">epic needs ${esc(epicNeeds.join(', '))}</span></div>` : ''}<div class="kids">${kids}</div></article>`;
+        return `<article class="epiccard"><div class="row"><span class="id">${esc(e.parent.id)}</span><span class="kind k-EPIC">EPIC</span><span class="st">${esc(e.parent.status)}</span>${(() => { const d = a.epicDrift.find((x) => x.epic === e.parent); return d ? `<span class="flag bad" title="${esc(d.why)}">should be ${esc(d.want)}</span>` : ''; })()}<span class="meta" style="margin-left:auto">${e.done}/${n} done</span></div><div class="title wrap">${esc(e.parent.title)}</div><div class="bar"><i style="width:${p}%"></i></div>${epicNeeds.length ? `<div class="flags"><span class="flag warn">epic needs ${esc(epicNeeds.join(', '))}</span></div>` : ''}<div class="kids">${kids}</div></article>`;
       }).join('')
     : '<p class="none">no epics yet</p>';
 

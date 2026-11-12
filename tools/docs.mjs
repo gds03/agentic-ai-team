@@ -322,7 +322,8 @@ header h1{font-size:16px;margin:0 6px 6px 0;align-self:center}
 .row[data-kids] .tree{cursor:pointer;padding:6px 6px 6px 0;margin:-6px 0}
 .row .tg{display:inline-block;width:1ch;padding:0 5px;margin:0 -5px;text-align:center;font-weight:700;color:var(--accent);border-radius:4px;user-select:none}
 .row[data-kids] .tree:hover .tg{background:var(--line)}
-.row .cnt{color:var(--muted);font-weight:400;white-space:nowrap}
+.row .cnt,.row .cnt-done,.row .cnt-left{color:var(--muted);font-weight:400;white-space:nowrap}
+.row .cnt-done{color:#2e9e66}.row .cnt-left{color:var(--warn)}
 .nomatch{padding:14px;color:var(--muted);font-size:14px}
 .row .st-done{color:#2e9e66}.row .st-in-progress,.row .st-in-review,.row .st-in-qa{color:var(--accent)}
 .grp{padding:12px 14px 4px;font:600 12px system-ui,sans-serif;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
@@ -518,6 +519,7 @@ function rowsOf(area){
     rows.push({item:i,depth,hasKids:c.length>0,count:0,prefix:depth?trail.join('')+(last?'└─ ':'├─ '):''});
     c.forEach((k,n)=>walk(k,depth?trail.concat(last?'   ':'│  '):[],n===c.length-1,depth+1));
     rows[at].count=rows.length-at-1; // everything below it: children and their children
+    rows[at].done=rows.slice(at+1).filter((x)=>x.item&&x.item.status==='done').length; // how many of those are done
   }
   const list=(items)=>items.forEach(i=>walk(i,[],true,0));
   const everything=all();
@@ -534,7 +536,7 @@ function rowHtml(r){
   const name=m?'<b>'+esc(m[1])+'</b>'+esc(m[2]):esc(i.file);
   const w=wtOf(i),badges=flags(i,false);
   const q=[i.file,i.title,i.id,i.status,i.priority,w?w.branch:''].join(' ').toLowerCase();
-  return '<div class="row" role="option" tabindex="-1" data-ref="'+esc(i.ref)+'" data-q="'+esc(q)+'" data-d="'+r.depth+'"'+(r.hasKids?' data-kids="1"':'')+'><span class="tree">'+esc(r.prefix)+(r.hasKids?'<span class="tg" role="button" title="Show or hide the children">+</span> ':'  ')+'</span><span class="name">'+name+(r.hasKids?' <span class="cnt" title="'+r.count+' item'+(r.count===1?'':'s')+' inside">('+r.count+')</span>':'')+(badges?'<span class="flags">'+badges+'</span>':'')+'</span>'+
+  return '<div class="row" role="option" tabindex="-1" data-ref="'+esc(i.ref)+'" data-q="'+esc(q)+'" data-d="'+r.depth+'"'+(r.hasKids?' data-kids="1"':'')+'><span class="tree">'+esc(r.prefix)+(r.hasKids?'<span class="tg" role="button" title="Show or hide the children">+</span> ':'  ')+'</span><span class="name">'+name+(r.hasKids?' <span class="cnt" title="'+r.count+' item'+(r.count===1?'':'s')+' inside">('+r.count+')</span> <span class="cnt-done" title="'+r.done+' done">(+'+r.done+')</span> <span class="cnt-left" title="'+(r.count-r.done)+' not done yet">(-'+(r.count-r.done)+')</span>':'')+(badges?'<span class="flags">'+badges+'</span>':'')+'</span>'+
     (i.mtime?'<span class="when" title="Last written '+fmtAt(i.mtime)+'">'+fmtAt(i.mtime)+'</span>':'')+
     (i.priority?'<span class="prio p-'+esc(i.priority)+'">'+esc(i.priority)+'</span>':'')+
     (i.status?'<span class="st st-'+esc(i.status)+'">'+esc(i.status)+'</span>':'')+'</div>';

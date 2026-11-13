@@ -172,8 +172,23 @@ not change; only the layout. Every item follows this, new or touched.
 | **Key decisions** | A numbered list headed "The N that matter:" (N = the number of decisions). Each item: a bold decision, then at most one short line of why, then `(spec ref)`. The *Key decisions diagram*, if there is one, follows unchanged. |
 | **Open questions** | A line first: `**N questions. Blocks the item.**` (or `None.`). Then one block per question: `### Qx. <a question that ends in ?>`, `**You'd notice:**` (one line), a Proposed-versus-Alternative table (or two bullets when a table does not fit), `**Example:**` (short, invented people and numbers), an optional `**One catch:**`, then `**Your call:**`. |
 
+## Screens
+
+The product owner cannot tell from a title whether an item has anything to click. Every item therefore
+opens with a **Screens** section, placed right before *Goal*:
+
+- **No screens:** `**Has screens:** no. Backend only (<what it changes instead>).` One line.
+- **Screens:** `**Has screens:** yes, N`, where N counts pages or screens the item adds or changes, then a
+  table: `Screen` (page name and route), `New or changed`, `For` (what the user does there, in product words).
+- Count what the user sees: pages, forms, emails or WhatsApp messages are not screens (name them in the
+  *For* column of a screen, or in the Goal). A layout link change counts as a changed screen.
+- For an `EPIC`: the sum over its children, with the child IDs in the *For* column.
+- The architect sets it when designing and keeps it true if the design adds or drops a page; the scrum master
+  writes a first guess when creating the item; the reviewer checks it against the PR's `.razor` files.
+
 ## Sections
 
+- **Screens**: see above. Always the first section after the frontmatter.
 - **Goal**: why, from the user's point of view, followed by a **goal diagram**: a short text diagram in a
   code block (about 12 lines at most, 80 columns, product words, no class names) in three named steps
   that read top to bottom: `TODAY` (the problem), `THIS ITEM` (the work), `AFTER` (what is true once it

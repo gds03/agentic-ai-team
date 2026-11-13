@@ -19,8 +19,12 @@ It works at any point once the item has a branch or PR (in review, in QA or done
    is the script. In that case step 5 means "run the saved seed" (its *Seeded data* list and the
    exact SQL/commands in it, skipping rows that already exist; if a `/deliver` first version says
    "not run yet", run it now and fix a command only if it fails), and steps 6 and 7 mean "show the
-   saved script as it is", adding only a short note on any step the running build contradicts. Do
-   not rewrite the section and do not add a *Log* line. Still do steps 2-4 (launch, confirm routes)
+   saved script as it is", adding only a short note on any step the running build contradicts.
+   **One exception: the *Seeded data* block.** After the seed has run, replace that block (and only
+   it) with the real values: logins and passwords, URLs, names, ids, prices, and what was created by
+   SQL instead of the UI. A `/deliver` first version is written before anything exists, so it has no
+   real logins, and the owner must never be left without one. Do not rewrite the steps and do not add a
+   *Log* line. Still do steps 2-4 (launch, confirm routes)
    and 8. Regenerate (full steps 5-7, replacing the block) only with `--refresh`, or when the
    item's acceptance criteria or *Design* changed after the script was written (check `git log` on
    the item file); say which reason applied.

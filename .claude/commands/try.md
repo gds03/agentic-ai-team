@@ -25,9 +25,17 @@ It works at any point once the item has a branch or PR (in review, in QA or done
    item's acceptance criteria or *Design* changed after the script was written (check `git log` on
    the item file); say which reason applied.
 2. **Take the commands from `CLAUDE.md`** (*Tech stack*: prerequisites, build, run, local
-   services). Never invent a command; if one is `TBD`, say so and stop instead of guessing. Start
-   the local services it names (database, mail catcher, ...) but do not start extra compose
-   projects: those belong to QA.
+   services). Never invent a command; if one is `TBD`, say so and stop instead of guessing.
+   **Give the item its own compose project**, `<repo>-try-bl-NNNN` (lower case), so its database
+   lives in its own Docker volume and keeps its seeded data between `/try` runs: trying the same
+   item again goes back to the same data. Start the local services CLAUDE.md names (database, mail
+   catcher, ...) with `docker compose -p <repo>-try-bl-NNNN up -d <services>` and run any SQL
+   through the same `-p`. Only one item runs at a time (they share host ports), so first **stop,
+   never remove,** whatever else holds those ports: `docker compose ls`, then
+   `docker compose -p <name> stop` for every other `<repo>-try-*` project and for the shared default
+   project if it is running. A new project has an empty database, which step 5 seeds; an existing
+   one keeps its rows. With `--refresh`, run `docker compose -p <repo>-try-bl-NNNN down -v` first to
+   start from nothing. Never run `down -v` on any other project; QA's projects are not yours.
 3. **Free the port the app uses.** Check what listens (`netstat -ano`, then the process command
    line). A leftover process of this repo's app: stop it and say so. Anything else: ask first.
 4. **Run the app from the item's worktree**, in the background, without a launch profile that
@@ -77,7 +85,8 @@ It works at any point once the item has a branch or PR (in review, in QA or done
    uncommitted unless the product owner asks you to commit it. On a merged item, edit it on the
    default branch the same way.
 8. **Say how to finish:** the app stops when they say so (stop it, then confirm nothing listens
-   on the port); the worktree you created is removed with `git worktree remove` only when they
+   on the port); the containers stay stopped (`docker compose -p <repo>-try-bl-NNNN stop`), keeping the seed for the
+   next `/try` of this item (`down -v` only when they ask); the worktree you created is removed with `git worktree remove` only when they
    ask. Do not merge; merging is the product owner's call.
 
 If the item has no UI or runtime behaviour (docs, ADR, research), say so and give a short

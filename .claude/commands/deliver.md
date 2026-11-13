@@ -35,7 +35,11 @@ subagent with the Agent tool, passing the item file path and the previous step's
    step 5 starts, write the item's *Manual test script* block yourself, with no agent and without
    launching the app: follow `/try` steps 5 to 7 (`.claude/commands/try.md`) from the acceptance
    criteria, the *Log* and the spec, and save it into the item file after *Design*. Items with no UI or
-   runtime behaviour get the short "what to read" checklist instead. Append the *Log* line
+   runtime behaviour get the short "what to read" checklist instead. The *Seeded data* list of this
+   first version is not prose: it names each login with its password, and for everything the app's
+   screens cannot create (staff hours, who does which service, add-ons, a calendar in link mode, expired
+   or failed states) it holds the exact SQL or `curl` commands, marked "not run yet", so `/try` runs them
+   instead of inventing them. Append the *Log* line
    `orchestrator: wrote the manual test script (before QA)`, then commit it on the item's branch
    (`BL-NNNN: manual test script`) and push, so the worktree stays clean for QA. `/try BL-NNNN` later
    launches the app and regenerates the block against the real build if anything differs.

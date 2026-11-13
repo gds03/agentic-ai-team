@@ -33,6 +33,8 @@ Read `CLAUDE.md` first.
    - **Dependency diagram** (`CLAUDE.md`): when the item has one, check it against the code
      (every class and arrow present, the creator column right); flag a missing diagram for a
      mechanism of three or more classes.
+   - **Screens** (`CLAUDE.md`): the item's *Screens* section matches the `.razor` pages the PR adds or
+     changes (count and purpose); a missing or wrong one is a finding.
    - **Goal diagram** (`CLAUDE.md`): the item's *Goal* ends with a short diagram that matches what
      the PR actually solves; a missing or misleading one is a nit.
    - **Scannable sections** (`CLAUDE.md`): *Goal*, *Key decisions* and *Open questions* of an item the PR adds

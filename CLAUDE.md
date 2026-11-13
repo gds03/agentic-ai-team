@@ -253,6 +253,10 @@ The product owner only has to say "continue" when the limit resets.
   ```
 
   Format in [`docs/backlog/README.md`](docs/backlog/README.md).
+- **Screens section**: every backlog item starts, right before *Goal*, with `## Screens`: `**Has screens:**
+  yes, N` (with a table of each screen and what it is for) or `no. Backend only`, so the product owner sees at
+  once whether there is anything to click. Rules in [`docs/backlog/README.md`](docs/backlog/README.md) (*Screens*).
+  The scrum master drafts it, the architect keeps it true, the reviewer checks it against the PR.
 - **Key decisions diagram**: an epic, or an item whose *Design* lists four or more key decisions, adds a
   short text diagram after that list showing how the decisions fit together (layers, flow, or what each
   one protects against). Same format limits as the goal diagram (about 12 lines, 80 columns, plain text).

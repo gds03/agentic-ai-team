@@ -15,6 +15,20 @@ spec:
 pr: 
 ---
 
+## Screens
+
+<!-- Required, right before Goal (docs/backlog/README.md, "Screens"). One of:
+**Has screens:** no. Backend only (<what it changes instead>).
+
+**Has screens:** yes, N (N = pages/screens added or changed)
+
+| Screen | New or changed | For |
+|---|---|---|
+| <page name, route> | new | <what the user does there> |
+-->
+
+**Has screens:** no. Backend only.
+
 ## Goal
 
 <!-- Scannable (docs/backlog/README.md): **In one line:** <the goal>, then at most 3 short bullets for why. -->

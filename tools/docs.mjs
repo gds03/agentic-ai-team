@@ -318,7 +318,7 @@ header h1{font-size:16px;margin:0 6px 6px 0;align-self:center}
 .find input{width:100%;font:14px system-ui,sans-serif;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 12px;outline:none}
 .find input:focus{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
 .row[hidden],.grp[hidden]{display:none}
-.row.cl{display:none}.panel.searching .row.cl{display:flex}
+.row.cl{display:none}.panel.searching .row.cl:not([hidden]){display:flex}
 .row[data-kids] .tree{cursor:pointer;padding:6px 6px 6px 0;margin:-6px 0}
 .row .tg{display:inline-block;width:1ch;padding:0 5px;margin:0 -5px;text-align:center;font-weight:700;color:var(--accent);border-radius:4px;user-select:none}
 .row[data-kids] .tree:hover .tg{background:var(--line)}

@@ -1,6 +1,6 @@
 ---
 description: Launch a backlog item's PR branch and give the product owner a click-by-click script to test it by hand
-argument-hint: BL-NNNN (or a PR number)
+argument-hint: BL-NNNN (or a PR number) [--refresh]
 ---
 
 Help the product owner test **$ARGUMENTS** by hand. This is a helper, not a pipeline step: do it
@@ -14,6 +14,16 @@ It works at any point once the item has a branch or PR (in review, in QA or done
    existing worktree for it with `git worktree list`. If there is none and the branch is not
    merged, create one outside the repo: `git worktree add ../<repo>-try-bl-NNNN <branch>`
    (fetch first). If the item is already merged, run from the default branch after `git pull`.
+   **Reuse a saved script.** If the item file already has a *Manual test script (from /try)*
+   section and `$ARGUMENTS` does not contain `--refresh`, do not write a new one: the saved script
+   is the script. In that case step 5 means "run the saved seed" (its *Seeded data* list and the
+   exact SQL/commands in it, skipping rows that already exist; if a `/deliver` first version says
+   "not run yet", run it now and fix a command only if it fails), and steps 6 and 7 mean "show the
+   saved script as it is", adding only a short note on any step the running build contradicts. Do
+   not rewrite the section and do not add a *Log* line. Still do steps 2-4 (launch, confirm routes)
+   and 8. Regenerate (full steps 5-7, replacing the block) only with `--refresh`, or when the
+   item's acceptance criteria or *Design* changed after the script was written (check `git log` on
+   the item file); say which reason applied.
 2. **Take the commands from `CLAUDE.md`** (*Tech stack*: prerequisites, build, run, local
    services). Never invent a command; if one is `TBD`, say so and stop instead of guessing. Start
    the local services it names (database, mail catcher, ...) but do not start extra compose

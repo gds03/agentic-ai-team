@@ -605,6 +605,11 @@ function filterPanel(p,text){
   }
   closeGroup();
   panel.querySelector('.nomatch').hidden=any;
+  // search cleared: the matches no longer force collapsed rows open, so open the parents of the selected row again
+  if(!words.length){
+    const sel=panel.querySelector('.row.sel');
+    if(sel){expandTo(sel);applyCollapse(panel);if(p.classList.contains('open'))panel.scrollTop=Math.max(0,sel.offsetTop-panel.clientHeight/2+sel.offsetHeight/2)}
+  }
 }
 // Collapse: a row with children shows + (or - when open); the rows below it that are deeper stay hidden
 // until it is opened. A row at the same or a lower depth ends that subtree. Group headings reset it.

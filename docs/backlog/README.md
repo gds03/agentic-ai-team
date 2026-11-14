@@ -204,6 +204,12 @@ opens with a **Screens** section, placed right before *Goal*:
   (`<summary>Manual test script (from /try)</summary>`, no `open` attribute), so it renders closed on
   GitHub and in `tools/docs.mjs`. `/try` replaces the block on each run (it is regenerated from the
   criteria and Log, not append-only) and records that in the *Log*.
+  **Everything the owner types or pastes is written as its own inline code span**, with the real
+  value: an email (`olivia@example.test`), a password, a name, a URL, a slug, a price, a token, a
+  command or SQL line. Never "enter a password of 12 characters" without the value to copy, and never
+  one code span holding two values. `tools/docs.mjs` makes every code span inside this block
+  click-to-copy, so a value that is not in code cannot be copied. Expected results stay prose; put a
+  value in code in an *Expected* only when the owner should compare it with something exact.
 - **Open questions**: for the product owner. Unanswered questions block the item. Every question has
   **examples**, so the owner sees the real problem and decides without reading the spec:
   - One line says what the owner would notice (screen, customer message, money, time), in product words. No

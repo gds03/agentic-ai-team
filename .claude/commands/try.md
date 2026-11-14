@@ -62,6 +62,10 @@ It works at any point once the item has a branch or PR (in review, in QA or done
    QA evidence, in this shape and nothing longer than it needs to be:
    - where to go (app URL, mail catcher URL) and the **Seeded data** list from step 5 (accounts,
      records that already exist); the owner creates nothing before the first step;
+   - **every value the owner types or pastes is its own inline code span with the real value**
+     (email, password, name, URL, slug, price, token, command, SQL), one value per span, so the docs
+     viewer (`tools/docs.mjs`) can copy it on click; "enter a 12-character password" without a value to
+     copy is not acceptable, and in the *Seeded data* list each login and password is a separate span;
    - numbered steps, each one action and the **expected result**, happy path first, then edge
      cases, each tagged with the criterion it covers (`criterion 3`);
    - states that are hard to reach in the UI (expired, rate limited, failure of an external

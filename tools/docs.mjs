@@ -350,6 +350,7 @@ h1,h2,h3,h4{line-height:1.3;margin:1.6em 0 .5em}h1{font-size:1.7em;margin-top:.8
 a{color:var(--accent)}
 code{background:var(--code);padding:.1em .35em;border-radius:4px;font:.88em ui-monospace,Consolas,monospace}
 pre{background:var(--code);padding:12px 14px;border-radius:8px;overflow:auto}pre code{background:none;padding:0}
+code.cp{cursor:copy;border:1px dashed var(--quote)}code.cp:hover,code.cp:focus{background:var(--quote);outline:none}code.cp.done{background:#2e9e5b;color:#fff;border-color:#2e9e5b}
 #doc details{margin:1em 0;padding:.4em 1em;border:1px solid var(--quote);border-radius:6px}
 #doc details>summary{cursor:pointer;font-weight:600}
 blockquote{margin:1em 0;padding:.1em 1em;border-left:4px solid var(--quote);color:var(--muted)}
@@ -446,7 +447,10 @@ function md(src){
       const open=!!m[1];i++;const buf=[];while(i<L.length&&!/^\s*<\/details>\s*$/i.test(L[i]))buf.push(L[i++]);i++;
       let title='Details';const s=buf.findIndex(x=>/<summary>/i.test(x));
       if(s>=0){const t=buf[s].match(/<summary>(.*?)<\/summary>/i);if(t){title=t[1];buf.splice(s,1)}}
-      out+='<details'+(open?' open':'')+'><summary>'+inline(title)+'</summary>'+md(buf.join('\n'))+'</details>';continue}
+      let body=md(buf.join('\n'));
+      // manual test scripts: every value in code (logins, passwords, URLs, SQL) copies to the clipboard on click
+      if(/^Manual test script/i.test(title.replace(/<[^>]*>/g,'').trim()))body=body.replace(/<code>/g,'<code class="cp" title="Click to copy" tabindex="0">');
+      out+='<details'+(open?' open':'')+'><summary>'+inline(title)+'</summary>'+body+'</details>';continue}
     if(m=l.match(/^\s*(\x60{3,}|~{3,})\s*(\S*)/)){const f=m[1];i++;const buf=[];while(i<L.length&&!L[i].trim().startsWith(f))buf.push(L[i++]);i++;out+='<pre><code>'+esc(buf.join('\n'))+'</code></pre>';continue}
     if(m=l.match(/^(#{1,6})\s+(.*?)\s*#*$/)){out+='<h'+m[1].length+'>'+inline(m[2])+'</h'+m[1].length+'>';i++;continue}
     if(/^\s*([-*_]\s*){3,}$/.test(l)){out+='<hr>';i++;continue}
@@ -496,6 +500,19 @@ function render(text,ref){
     else{a.removeAttribute('href');a.style.color='var(--muted)';a.title=target}
   });
 }
+
+// ---------- copy on click (manual test scripts) ----------
+async function copyText(t){
+  try{await navigator.clipboard.writeText(t)}
+  catch{const x=document.createElement('textarea');x.value=t;x.style.position='fixed';x.style.opacity='0';document.body.appendChild(x);x.select();document.execCommand('copy');x.remove()}
+}
+async function copyCode(c){
+  await copyText(c.textContent);
+  c.classList.add('done');c.dataset.was=c.title;c.title='Copied';
+  setTimeout(()=>{c.classList.remove('done');c.title=c.dataset.was||''},900);
+}
+$('#doc').addEventListener('click',(e)=>{const c=e.target.closest('code.cp');if(c)copyCode(c)});
+$('#doc').addEventListener('keydown',(e)=>{if(e.key!=='Enter'&&e.key!==' ')return;const c=e.target.closest('code.cp');if(c){e.preventDefault();copyCode(c)}});
 
 // ---------- navigation ----------
 function areaOf(ref){return index&&index.areas.find(a=>a.items.some(i=>i.ref===ref))}

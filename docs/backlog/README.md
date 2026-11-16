@@ -186,6 +186,39 @@ opens with a **Screens** section, placed right before *Goal*:
 - The architect sets it when designing and keeps it true if the design adds or drops a page; the scrum master
   writes a first guess when creating the item; the reviewer checks it against the PR's `.razor` files.
 
+## How it works
+
+The product owner sees a feature run before reading criteria. Every item has a `## How it works` section,
+placed right after *Goal* and before *Acceptance criteria*:
+
+- **One diagram**, plain text in a code block, top to bottom, no side or upward arrows, about 15 lines of
+  80 columns. Product words, no class names.
+- **Starts with the trigger** (`EVERY 30 SECONDS`, `CUSTOMER TAPS`, `OWNER SAVES`), then the steps, each with
+  the outcomes that matter (sent, skipped and why, refused). Checks that run in order are numbered.
+- **Ends with the hand-off**: one line naming what happens next and which item owns it.
+- **No flow** (docs, research, pure schema): one line, `No flow: <reason>`.
+- Differs from the *Goal diagram*: that one says why (problem, work, result); this one says what happens at
+  runtime. For an `EPIC`, show how the children's flows chain.
+- The architect writes it and keeps it true; the scrum master may draft it; the reviewer checks it against the
+  code. Not backfilled on `done` items.
+
+Example:
+
+```
+ EVERY 30 SECONDS   find reminders due now (all shops, oldest first)
+   |
+   v
+ CHECKS, in order   1 booking still confirmed, same time?  no -> skipped
+   |                2 not started yet?                    no -> skipped: missed
+   |                3 customer said yes?                  no -> skipped
+   |                4 shop WhatsApp connected, no STOP?   no -> skipped
+   v
+ SEND               WhatsApp text with [Confirm] [Cancel], queued once
+   |
+   v
+ HAND-OFF           customer taps -> handled by the item that owns replies
+```
+
 ## Sections
 
 - **Screens**: see above. Always the first section after the frontmatter.
@@ -196,6 +229,7 @@ opens with a **Screens** section, placed right before *Goal*:
   not replace it. For an `EPIC`: the problem, the children, the outcome they add up to; for a `BUG`: the
   failing path, then the expected one; for `RESEARCH` / `ARCH`: the question, the decision, what it
   unblocks. Example in `CLAUDE.md` (*Goal diagram*).
+- **How it works**: the runtime flow diagram, see above. Right after *Goal*.
 - **Acceptance criteria**: numbered, testable. QA verifies each one.
 - **Design**: filled by the architect: approach, contracts, files likely touched.
 - **Manual test script**: written by `/deliver` after the reviewer approves and before QA (and by `/try`

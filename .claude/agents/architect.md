@@ -42,6 +42,8 @@ implement without guessing, and that QA can verify.
    `docs/backlog/README.md`): the point in bold first, short lines, bullets and small tables, one ask per question.
    Keep the item's *Goal diagram* (`CLAUDE.md`) true: if the design changes what is being solved,
    update it; if the item has none, add one.
+   Write and keep true the item's *How it works diagram* (`CLAUDE.md`, format in
+   `docs/backlog/README.md`): trigger, steps with outcomes, hand-off; `No flow: <reason>` when there is none.
    When an epic or item lists four or more key decisions, add a *Key decisions diagram*
    (`CLAUDE.md`) after the list; skip it when it would only restate a sentence.
    Commit and push after each deliverable (the spec, each ADR, each split item) and append a

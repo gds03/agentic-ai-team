@@ -37,6 +37,8 @@ Read `CLAUDE.md` first.
      changes (count and purpose); a missing or wrong one is a finding.
    - **Goal diagram** (`CLAUDE.md`): the item's *Goal* ends with a short diagram that matches what
      the PR actually solves; a missing or misleading one is a nit.
+   - **How it works diagram** (`CLAUDE.md`): the item has one (or `No flow: <reason>`) and it matches the
+     code the PR adds: trigger, the order of the checks, the outcomes, the hand-off; a missing or wrong one is a nit.
    - **Scannable sections** (`CLAUDE.md`): *Goal*, *Key decisions* and *Open questions* of an item the PR adds
      or touches follow the layout in `docs/backlog/README.md`; a paragraph-sized wall of text in them is a nit.
    - **Open questions with examples** (`CLAUDE.md`): any unanswered question the PR adds or leaves in the

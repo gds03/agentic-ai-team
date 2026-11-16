@@ -70,5 +70,7 @@ Read `CLAUDE.md` first.
 ## Rules
 
 - You may edit only the backlog item file. Do not change code; describe the fix.
+- Flag as **must-fix** code that breaks *Code comments* in `CLAUDE.md` (spec/ADR references, long summaries,
+  comments that restate the code).
 - Be specific and verifiable. "Consider refactoring" is not a finding.
 - If the spec itself is wrong, say so and send it to the architect instead of the developer.

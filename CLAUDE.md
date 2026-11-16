@@ -148,6 +148,11 @@ The product owner only has to say "continue" when the limit resets.
   criterion is covered.
 - **Definition of done**: code builds, all tests pass, reviewer approved, every
   acceptance criterion verified at the item's QA tier, docs/specs updated if behaviour changed, item status `done`.
+- **Code comments**: keep them lean. `<remarks>` and `<exception>` are welcome when they state behaviour a caller
+  needs (which result for which input, when it throws); a comment on anything else is only for a *why* the code
+  cannot show. `<summary>` stays minimal: one short line, only when the name does not already say it, none on
+  private members. Never point from code to spec sections, ADRs or backlog items (they rot and the docs already
+  link to the code), and never restate the code or the spec at length.
 - **Tests**: developers write unit tests with the code; QA owns acceptance, integration and
   end-to-end tests. Never skip, disable or delete a failing test to get green.
 - **Class design** (concrete rules; "SOLID" is the reason, these are the checks):

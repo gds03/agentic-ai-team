@@ -43,6 +43,8 @@ re-run tests, push, and hand back to the same role.
   stop and say so instead of copying it.
   If you change the classes of a mechanism that has a dependency diagram, update the diagram
   in the same PR.
+- Follow *Code comments* in `CLAUDE.md`: minimal summaries, `<remarks>`/`<exception>` only for caller-facing
+  behaviour, no references to spec sections, ADRs or items in code.
 - Stay inside the item's scope. Anything else you notice goes in your summary as a
   suggested new item; do not fix it silently.
 - If the design is wrong or ambiguous, stop and say so instead of improvising; the

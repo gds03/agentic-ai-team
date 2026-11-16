@@ -46,6 +46,20 @@ pr:
 ```
 -->
 
+## How it works
+
+<!-- Runtime flow, top to bottom: trigger, steps with outcomes, hand-off. About 15 lines, product words.
+     Or one line: "No flow: <reason>". Format in docs/backlog/README.md. -->
+```
+ <TRIGGER>   <what starts it>
+   |
+   v
+ <STEPS>     <what happens, with the outcomes that matter>
+   |
+   v
+ HAND-OFF    <what happens next, and which item owns it>
+```
+
 ## Acceptance criteria
 
 1. 

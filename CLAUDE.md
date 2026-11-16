@@ -257,6 +257,17 @@ The product owner only has to say "continue" when the limit resets.
   yes, N` (with a table of each screen and what it is for) or `no. Backend only`, so the product owner sees at
   once whether there is anything to click. Rules in [`docs/backlog/README.md`](docs/backlog/README.md) (*Screens*).
   The scrum master drafts it, the architect keeps it true, the reviewer checks it against the PR.
+- **How it works diagram** (so the product owner sees the feature run, in a nutshell): every backlog item
+  has a `## How it works` section right after *Goal* and before *Acceptance criteria*, holding one text
+  diagram in a code block that reads top to bottom: the **trigger** first (a timer, a customer tap, an owner
+  action), then the steps in product words with the outcomes that matter (sent, skipped and why, refused),
+  and a last line saying where it hands off to another item. About 15 lines of 80 columns, one direction, no
+  class names. It shows what happens at runtime; the *Goal diagram* shows why. An item with no flow writes
+  one line, `No flow: <reason>` (docs, research, pure schema). The architect writes it and keeps it true when
+  the design changes, the scrum master may draft a first guess, and the reviewer checks it against the code.
+  An epic shows how its children's flows chain. Apply it to new items and to open items you touch; do not
+  backfill `done` items. Format and example in [`docs/backlog/README.md`](docs/backlog/README.md)
+  (*How it works*).
 - **Key decisions diagram**: an epic, or an item whose *Design* lists four or more key decisions, adds a
   short text diagram after that list showing how the decisions fit together (layers, flow, or what each
   one protects against). Same format limits as the goal diagram (about 12 lines, 80 columns, plain text).

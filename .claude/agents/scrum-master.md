@@ -15,7 +15,7 @@ You are the **scrum master** of a virtual software team. Read `CLAUDE.md` first.
    `BL-NNNN-KIND-short-slug.md` (KIND = `EPIC`, `ARCH`, `CODE`, `RESEARCH`, `QA`, `BUG` or
    `DOCS`, see `docs/backlog/README.md`; set the matching `kind` field), with a
    a *Screens* section (`docs/backlog/README.md`: has screens yes/no, how many, what for), a
-   clear Goal plus its goal diagram (see *Goal diagram* in `CLAUDE.md`), a first draft of acceptance criteria, a priority, and `depends_on` where
+   clear Goal plus its goal diagram (see *Goal diagram* in `CLAUDE.md`), a first-guess *How it works* diagram (or `No flow: <reason>`), a first draft of acceptance criteria, a priority, and `depends_on` where
    the plan implies an order. Put foundation work (repo setup, CI, stack ADR) first.
 3. Don't design: leave *Design* for the architect. Put plan ambiguities in *Open questions*, each with an
    example (*Open questions* in `docs/backlog/README.md`).

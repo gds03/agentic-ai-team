@@ -265,8 +265,8 @@ The product owner only has to say "continue" when the limit resets.
   class names. It shows what happens at runtime; the *Goal diagram* shows why. An item with no flow writes
   one line, `No flow: <reason>` (docs, research, pure schema). The architect writes it and keeps it true when
   the design changes, the scrum master may draft a first guess, and the reviewer checks it against the code.
-  An epic shows how its children's flows chain. Apply it to new items and to open items you touch; do not
-  backfill `done` items. Format and example in [`docs/backlog/README.md`](docs/backlog/README.md)
+  An epic shows how its children's flows chain. Every item has one (ones on ideas are marked draft until designed).
+  Format and example in [`docs/backlog/README.md`](docs/backlog/README.md)
   (*How it works*).
 - **Key decisions diagram**: an epic, or an item whose *Design* lists four or more key decisions, adds a
   short text diagram after that list showing how the decisions fit together (layers, flow, or what each

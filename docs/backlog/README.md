@@ -200,7 +200,7 @@ placed right after *Goal* and before *Acceptance criteria*:
 - Differs from the *Goal diagram*: that one says why (problem, work, result); this one says what happens at
   runtime. For an `EPIC`, show how the children's flows chain.
 - The architect writes it and keeps it true; the scrum master may draft it; the reviewer checks it against the
-  code. Not backfilled on `done` items.
+  code. A diagram marked "draft" is rewritten when the item is designed.
 
 Example:
 

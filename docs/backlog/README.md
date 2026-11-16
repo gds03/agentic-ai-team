@@ -202,7 +202,10 @@ opens with a **Screens** section, placed right before *Goal*:
   on demand), placed after *Design* and before *Open questions*, so the click-by-click steps stay with
   the item and the product owner can try the work themself. It is a collapsed `<details>` block
   (`<summary>Manual test script (from /try)</summary>`, no `open` attribute), so it renders closed on
-  GitHub and in `tools/docs.mjs`. `/try` replaces the block on each run (it is regenerated from the
+  GitHub and in `tools/docs.mjs`, where the card shows its heading at the same size as *Log* (h2) with
+  the arrow and opens on a click anywhere on it (the styling lives in `tools/docs.mjs`, never in the
+  item files, so every item gets it). The item's `## Log` section is rendered the same way by the
+  viewer (a closed card, no change to the item file: keep writing it as a plain `## Log` heading). `/try` replaces the block on each run (it is regenerated from the
   criteria and Log, not append-only) and records that in the *Log*.
   **Everything the owner types or pastes is written as its own inline code span**, with the real
   value: an email (`olivia@example.test`), a password, a name, a URL, a slug, a price, a token, a

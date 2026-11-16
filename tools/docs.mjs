@@ -352,7 +352,9 @@ code{background:var(--code);padding:.1em .35em;border-radius:4px;font:.88em ui-m
 pre{background:var(--code);padding:12px 14px;border-radius:8px;overflow:auto}pre code{background:none;padding:0}
 code.cp{cursor:copy;border:1px dashed var(--quote)}code.cp:hover,code.cp:focus{background:var(--quote);outline:none}code.cp.done{background:#2e9e5b;color:#fff;border-color:#2e9e5b}
 #doc details{margin:1em 0;padding:.4em 1em;border:1px solid var(--quote);border-radius:6px}
-#doc details>summary{cursor:pointer;font-weight:600}
+#doc details>summary{cursor:pointer;font-weight:600;font-size:1.35em;line-height:1.3;padding:.2em 0}
+#doc details:not([open]){cursor:pointer}#doc details:not([open]):hover{background:var(--code)}
+#doc details[open]>summary{border-bottom:1px solid var(--line);margin-bottom:.6em}
 blockquote{margin:1em 0;padding:.1em 1em;border-left:4px solid var(--quote);color:var(--muted)}
 table{border-collapse:collapse;display:block;overflow:auto;margin:1em 0}th,td{border:1px solid var(--line);padding:5px 10px;text-align:left;vertical-align:top}th{background:var(--code)}
 hr{border:0;border-top:1px solid var(--line);margin:1.6em 0}
@@ -452,6 +454,10 @@ function md(src){
       if(/^Manual test script/i.test(title.replace(/<[^>]*>/g,'').trim()))body=body.replace(/<code>/g,'<code class="cp" title="Click to copy" tabindex="0">');
       out+='<details'+(open?' open':'')+'><summary>'+inline(title)+'</summary>'+body+'</details>';continue}
     if(m=l.match(/^\s*(\x60{3,}|~{3,})\s*(\S*)/)){const f=m[1];i++;const buf=[];while(i<L.length&&!L[i].trim().startsWith(f))buf.push(L[i++]);i++;out+='<pre><code>'+esc(buf.join('\n'))+'</code></pre>';continue}
+    if(/^##\s+Log\s*#*$/i.test(l)){
+      // the item Log renders as a closed card, like the manual test script: everything up to the next h2
+      i++;const buf=[];while(i<L.length&&!/^##\s/.test(L[i]))buf.push(L[i++]);
+      out+='<details><summary>Log</summary>'+md(buf.join('\n'))+'</details>';continue}
     if(m=l.match(/^(#{1,6})\s+(.*?)\s*#*$/)){out+='<h'+m[1].length+'>'+inline(m[2])+'</h'+m[1].length+'>';i++;continue}
     if(/^\s*([-*_]\s*){3,}$/.test(l)){out+='<hr>';i++;continue}
     if(l.startsWith('>')){const buf=[];while(i<L.length&&L[i].startsWith('>'))buf.push(L[i++].replace(/^>\s?/,''));out+='<blockquote>'+md(buf.join('\n'))+'</blockquote>';continue}
@@ -512,6 +518,8 @@ async function copyCode(c){
   setTimeout(()=>{c.classList.remove('done');c.title=c.dataset.was||''},900);
 }
 $('#doc').addEventListener('click',(e)=>{const c=e.target.closest('code.cp');if(c)copyCode(c)});
+// a closed collapsible card opens when clicked anywhere on it (an open one closes via its heading)
+$('#doc').addEventListener('click',(e)=>{const d=e.target.closest('details');if(d&&!d.open&&!e.target.closest('summary,a')){d.open=true}});
 $('#doc').addEventListener('keydown',(e)=>{if(e.key!=='Enter'&&e.key!==' ')return;const c=e.target.closest('code.cp');if(c){e.preventDefault();copyCode(c)}});
 
 // ---------- navigation ----------

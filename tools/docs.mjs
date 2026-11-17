@@ -356,7 +356,7 @@ code.cp{cursor:copy;border:1px dashed var(--quote)}code.cp:hover,code.cp:focus{b
 #doc details:not([open]){cursor:pointer}#doc details:not([open]):hover{background:var(--code)}
 #doc details[open]>summary{border-bottom:1px solid var(--line);margin-bottom:.6em}
 blockquote{margin:1em 0;padding:.1em 1em;border-left:4px solid var(--quote);color:var(--muted)}
-table{border-collapse:collapse;display:block;overflow:auto;margin:1em 0}th,td{border:1px solid var(--line);padding:5px 10px;text-align:left;vertical-align:top}th{background:var(--code)}
+table{border-collapse:collapse;display:block;overflow:auto;margin:1em 0}th,td{border:1px solid var(--line);padding:5px 10px;text-align:left;vertical-align:top;overflow-wrap:normal;word-break:normal}th{background:var(--code)}
 hr{border:0;border-top:1px solid var(--line);margin:1.6em 0}
 img{max-width:100%}ul,ol{padding-left:1.5em}li.task{list-style:none;margin-left:-1.3em}li.task input{margin-right:.5em}
 .empty{color:var(--muted);padding:40px 0;text-align:center}

@@ -53,7 +53,7 @@ Read `CLAUDE.md` first.
    **Checkpoint as you go** (see *Checkpoints and interrupted runs* in `CLAUDE.md`): after each
    area above, append `reviewer: checkpoint: <area> reviewed, findings so far: <list or none>` to the
    item's *Log* (one line with Bash, for example `echo "- <time> reviewer: ..." >> <item file>`; touch nothing else), commit that Log change
-   with the prefix `BL-NNNN:` and push. A review that is cut off then keeps its findings. If the Log
+   with the prefix `reviewer: BL-NNNN:` and push. A review that is cut off then keeps its findings. If the Log
    already shows checkpoints, continue from them.
 4. Write the verdict:
    - **Approved**: set `status: in-qa`, `owner: qa` (for a `skip` or `light` item the

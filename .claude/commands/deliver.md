@@ -43,7 +43,7 @@ subagent with the Agent tool, passing the item file path and the previous step's
    or failed states) it holds the exact SQL or `curl` commands, marked "not run yet", so `/try` runs them
    instead of inventing them. Append the *Log* line
    `orchestrator: wrote the manual test script (before QA)`, then commit it on the item's branch
-   (`BL-NNNN: manual test script`) and push, so the worktree stays clean for QA. `/try BL-NNNN` later
+   (`orchestrator: BL-NNNN: manual test script`) and push, so the worktree stays clean for QA. `/try BL-NNNN` later
    launches the app and regenerates the block against the real build if anything differs.
 5. Close the item according to its `qa` tier (the reviewer may have raised it; read the
    field again after the review):

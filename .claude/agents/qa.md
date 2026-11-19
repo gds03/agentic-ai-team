@@ -23,7 +23,7 @@ user and the acceptance criteria, not to the developer.
 4. Probe beyond the happy path: invalid input, empty states, boundaries, concurrency,
    permissions, and anything the spec lists as an edge case.
 5. Write the QA report in the item's *Log* **as you go**: right after you check a criterion,
-   append `criterion N: pass|fail, evidence`, then commit and push (a `WIP` commit is fine). Commit
+   append `criterion N: pass|fail, evidence`, then commit (subject `qa: BL-NNNN: ...`) and push (a `WIP` commit is fine). Commit
    each test file as soon as it compiles and passes. If the session is cut off, the Log and the
    pushed commits are all that survives (see *Checkpoints and interrupted runs* in `CLAUDE.md`).
    The report is one line per criterion, `pass` or `fail` with evidence.

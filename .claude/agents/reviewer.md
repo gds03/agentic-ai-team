@@ -61,8 +61,11 @@ Read `CLAUDE.md` first.
    - Also judge the item's `qa` tier. You may raise it (e.g. `light` to `full` because a
      criterion has no automated test, or the change touches auth or a schema), never lower it.
      For `light`, name in the *Log* which test covers each criterion.
-   - Also judge `qa_scope` against the diff: if it touches the kernel, `DbContext`, migrations, DI,
-     infrastructure or `ShopKit.Base`, or files outside the slice, raise it (`area` or `full`), never lower it.
+   - Also judge `qa_scope` against the diff (`git diff --name-only origin/main...HEAD`) by the path table of
+     *Test scope* in `docs/backlog/README.md`: the highest row reached wins; raise it (`area` or `full`) when the
+     diff reaches higher, never lower it. Check the logged commands too: slow tests back for a `_Shared` change
+     (steps 1b and 2), the host-boot smoke for a changed registration file (step 3), every added or edited test
+     class run (step 4), and no command with 0 tests. A missing step is a finding.
    - **Changes requested**: set `status: in-progress`, `owner: developer`.
    Append a *Log* line, and list findings as `file:line — problem — suggested fix`,
    each marked **must-fix** or **nit**. Only must-fix items block approval.

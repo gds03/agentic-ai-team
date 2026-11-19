@@ -62,9 +62,10 @@ implement without guessing, and that QA can verify.
    Set the item's `qa:` tier (`skip` | `light` | `full`, rules in `docs/backlog/README.md`)
    and write criteria so each is testable by a named automated test; that is what makes
    `light` possible. Default to `full` when unsure.
-   Also set `qa_scope:` (`slice` | `area` | `full`, *Test scope* in `docs/backlog/README.md`) from the
-   folders the design touches: `slice` if it stays inside one slice, `full` if it touches the kernel,
-   `DbContext`, migrations, DI or infrastructure.
+   Also set `qa_scope:` (`slice` | `area` | `full`) by the path table of *Test scope* in
+   `docs/backlog/README.md`, applied to the files the design will change: the highest row reached wins. A
+   slice's own registration file is `slice`, an area's `_Shared` folder is `area`; the kernel (database
+   context and migrations included), host, shared libraries, test `Support/` folders and build files are `full`.
 7. Put anything that needs a product decision under **Open questions** and set
    `blocked: true`. Do not invent product behaviour. **Every question carries examples**
    (*Open questions* in `docs/backlog/README.md`, *Open questions come with examples* in `CLAUDE.md`):

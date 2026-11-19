@@ -22,8 +22,12 @@ Implement exactly one backlog item.
    `<UseCase>Data` holder class in `<UseCase>Data.cs`; types with logic get their own file
    (see *Data carriers versus logic* in `CLAUDE.md`).
 4. Write unit tests alongside the code. Run the build and the tests for the item's `qa_scope`
-   (default `slice`, see *Test scope* in `docs/backlog/README.md`; commands are in `CLAUDE.md`);
-   everything must pass. CI runs the full suite on the PR, so do not run it locally unless the scope is `full`. **Checkpoint as you go** (see *Checkpoints and
+   (default `slice`); everything must pass. Pick the commands from *Test scope* in
+   `docs/backlog/README.md` (path table, steps 1 to 4; the stack's commands are in `CLAUDE.md`): the local
+   default leaves out `Speed=Slow` tests, which come back only for a `_Shared` change or `full`; add the
+   host-boot smoke when a registration file changed; always run the test classes you added or edited. Log each
+   command with its test count (never 0).
+   CI runs the full suite on the PR, so do not run it locally unless the scope is `full`. **Checkpoint as you go** (see *Checkpoints and
    interrupted runs* in `CLAUDE.md`): commit and push the branch when the failing tests are written,
    then after each criterion or slice is done, and append a *Log* line `developer: checkpoint: <done>;
    next: <remaining>` each time. If the Log already shows checkpoints, continue from them.

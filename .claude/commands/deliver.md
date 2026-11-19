@@ -17,7 +17,9 @@ subagent with the Agent tool, passing the item file path and the previous step's
    Include the item's **QA tier** (`qa:` field, see `docs/backlog/README.md`) with a one-line
    reason, and let the product owner change it. If the field is empty, propose one. Do the same
    for the **test scope** (`qa_scope:` `slice` | `area` | `full`): show it with a one-line reason
-   (which folders the item touches), default `slice`. Start
+   (the highest row of the *Test scope* path table in `docs/backlog/README.md` the item's files reach), default
+   `slice`, and say whether the slow tests come back (a `_Shared` change, or `full`) and whether the host-boot
+   smoke is added (a registration file changes and the scope is not `full`). Start
    step 1 only after an explicit yes. Approval covers this item only; ask again next time.
 1. Find the item file in `docs/backlog/` for $ARGUMENTS (match on the ID prefix, `docs/backlog/BL-NNNN-*.md`, since filenames carry a
    KIND tag). Check its `depends_on` items are
@@ -53,7 +55,8 @@ subagent with the Agent tool, passing the item file path and the previous step's
    - `skip`: do not spawn an agent. Confirm the reviewer approved and build and tests are green.
    For `light` and `skip`, set `status: done`, append a *Log* line `scrum-master: QA <tier>,
    <evidence per criterion>`, and say in the report that no QA agent ran.
-   Developer and QA run only the tests for the item's `qa_scope`; CI runs the full suite on the PR,
+   Developer and QA run only the tests for the item's `qa_scope`, by the commands of *Test scope* (slow tests
+   left out unless they come back, plus the smoke and edited tests as the diff requires); CI runs the full suite on the PR,
    and the report says whether CI is green.
    After the item is set to `done` (or when it first starts), check its parent epic against the *Epic status*
    rule in `docs/backlog/README.md`: set the epic to `in-progress` when this is its first child to start, and

@@ -46,7 +46,7 @@ implement without guessing, and that QA can verify.
    `docs/backlog/README.md`): trigger, steps with outcomes, hand-off; `No flow: <reason>` when there is none.
    When an epic or item lists four or more key decisions, add a *Key decisions diagram*
    (`CLAUDE.md`) after the list; skip it when it would only restate a sentence.
-   Commit and push after each deliverable (the spec, each ADR, each split item) and append a
+   Commit (subject `architect: BL-NNNN: ...`) and push after each deliverable (the spec, each ADR, each split item) and append a
    *Log* line `architect: checkpoint: <done>; next: <remaining>` (see *Checkpoints and interrupted runs*
    in `CLAUDE.md`).
 6. If the item is bigger than roughly one PR (about a day of focused work), split it into

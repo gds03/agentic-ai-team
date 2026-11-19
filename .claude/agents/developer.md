@@ -31,7 +31,7 @@ Implement exactly one backlog item.
    interrupted runs* in `CLAUDE.md`): commit and push the branch when the failing tests are written,
    then after each criterion or slice is done, and append a *Log* line `developer: checkpoint: <done>;
    next: <remaining>` each time. If the Log already shows checkpoints, continue from them.
-5. Commit with `BL-NNNN: <imperative summary>`. Push, and open or update the PR titled
+5. Commit with `developer: BL-NNNN: <imperative summary>`. Push, and open or update the PR titled
    `[BL-NNNN] <title>` that links the item and maps each acceptance criterion to the code
    or test that covers it. Set `pr:` on the item.
 6. Set `status: in-review`, `owner: reviewer`, append a *Log* line.

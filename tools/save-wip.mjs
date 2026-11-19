@@ -14,7 +14,7 @@ const args = process.argv.slice(2);
 const flag = (name) => { const i = args.indexOf(name); return i >= 0 ? args.splice(i, 2)[1] : undefined; };
 const dryRun = args.includes('--dry-run') && args.splice(args.indexOf('--dry-run'), 1).length === 1;
 const item = flag('--item');
-const role = flag('--role') ?? 'agent';
+const role = flag('--role') ?? 'orchestrator';
 const dir = resolve(args[0] ?? '.');
 
 const git = (...a) => execFileSync('git', a, { cwd: dir, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trimEnd();
@@ -36,7 +36,7 @@ if (risky.length) fail(`not committing, these look like secrets: ${risky.join(',
 if (!status) {
   console.log(`save-wip: ${branch} has nothing uncommitted.`);
 } else {
-  const label = item ? `WIP ${item}` : 'WIP';
+  const label = `${role}: ${item ? `WIP ${item}` : 'WIP'}`;
   const message = `${label}: checkpoint, ${role} run was interrupted (${changed.length} file${changed.length === 1 ? '' : 's'})`;
   console.log(`save-wip: ${changed.length} uncommitted file(s) on ${branch}:`);
   for (const p of changed.slice(0, 40)) console.log(`  ${p}`);

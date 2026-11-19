@@ -143,7 +143,12 @@ The product owner only has to say "continue" when the limit resets.
   `date '+%Y-%m-%d %H:%M'`, not guessed).
 - **Branches**: `bl-NNNN-short-slug` when you choose the name; if the environment assigns
   a branch, use it and put the item ID in the PR title.
-- **Commits**: imperative mood, prefix with the item ID, e.g. `BL-0007: add booking slot validation`.
+- **Commits**: subject is `<identity>: BL-NNNN: <imperative summary>`, where `<identity>` is the agent making the
+  commit (`orchestrator`, `scrum-master`, `architect`, `developer`, `reviewer`, `qa`, `researcher`, or `owner` for the
+  human), e.g. `developer: BL-0007: add booking slot validation`. Several agents commit on one item, so the history
+  must show who did what. Every agent uses its own identity, including checkpoint and `WIP` commits. The versioned
+  hook `.githooks/commit-msg` rejects other subjects; enable it once per clone with
+  `git config core.hooksPath .githooks` (worktrees share it).
 - **One item per PR.** The PR body links the item file and lists how each acceptance
   criterion is covered.
 - **Definition of done**: code builds, all tests pass, reviewer approved, every

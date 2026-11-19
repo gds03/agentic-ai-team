@@ -1,0 +1,11 @@
+#!/bin/sh
+# Enforces the commit subject format from CLAUDE.md: "<identity>: BL-NNNN: <summary>".
+# Enable once per clone: git config core.hooksPath .githooks
+subject=$(head -n1 "$1")
+case "$subject" in Merge\ *|Revert\ *|fixup!*|squash!*) exit 0 ;; esac
+if ! printf '%s' "$subject" | grep -Eq '^(orchestrator|scrum-master|architect|developer|reviewer|qa|researcher|owner): (BL-[0-9]{4}|WIP BL-[0-9]{4}|WIP): .+'; then
+  echo "commit rejected: subject must be '<identity>: BL-NNNN: <summary>'" >&2
+  echo "  identity: orchestrator | scrum-master | architect | developer | reviewer | qa | researcher | owner" >&2
+  echo "  e.g. developer: BL-0007: add booking slot validation" >&2
+  exit 1
+fi

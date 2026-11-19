@@ -309,7 +309,8 @@ Build and test commands (keep this up to date once the stack exists):
 
 ```bash
 # build:  TBD
-# test:   TBD
+# test:   TBD                 # every test, as CI runs it (Test scope step 1c)
+# slow out / slow back / other slow / smoke / edited: TBD   # one line per step 1a to 4 of Test scope in docs/backlog/README.md
 # run:    TBD
 ```
 

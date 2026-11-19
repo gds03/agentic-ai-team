@@ -135,21 +135,82 @@ Rules:
 ## Test scope
 
 The `qa` tier says *how much QA effort* an item gets; `qa_scope` says *which tests run locally* while
-doing it. The full suite (including Testcontainers integration tests) is slow, and it already runs in CI
-on every pull request, so agents run only what the item touched. The architect proposes `qa_scope`, the
-product owner confirms it at pre-flight, and the reviewer may raise it (never lower it).
+doing it. The full suite is slow, and it already runs in CI on every pull request, so agents run only what
+the item touched. The architect proposes `qa_scope` from the path table below, the product owner confirms
+it at pre-flight, and the reviewer may raise it (never lower it).
 
-| Scope | Use when | Developer and QA run locally |
+| Scope | Developer and QA run locally |
+|---|---|
+| `slice` (default) | Build, plus the tests of each slice reached, slow tests left out unless a row says they come back |
+| `area` | Build, plus the tests of each area reached, same rule for slow tests |
+| `full` | Build, plus every test, as CI runs them |
+
+**Slow tests.** A test class that is expensive by design (parallel races, random sequences, whole journeys)
+carries the marker `Speed=Slow` (a trait, tag or category, whatever the stack calls it). The architect names
+the marker and the tagged list in the spec, and a test pins the list, so a new slow class is a visible line
+in a PR and never a silent drop from local runs. Measure before tagging: a test that only looks slow
+because it waited for shared start-up (a database container, a build) is not slow.
+
+- Slow tests are **left out of local runs by default** (CI still runs them on every PR).
+- They **come back** when the branch changes a file under an area's `_Shared` folder (row 3), or when the
+  scope is `full`; then all of them run, not only the area's.
+- A test class the branch **adds or edits always runs**, slow or not.
+
+**Host-boot smoke.** The project's quick check that the app starts and every registration resolves (for
+example a test that boots the host, plus the tests of each slice's registration). It is added when the
+branch adds, edits or removes a slice's or area's registration file and the scope is not `full` (a `full`
+run already contains it). Without it, a forgotten registration passes the slice's own tests and fails only
+in CI.
+
+### Path table
+
+Each changed file (`git diff --name-only origin/main...HEAD`) gets the first row it matches. **The highest row
+reached wins**: the item's scope is the highest scope any file reaches (`slice` < `area` < `full`), and a
+`slice` or `area` scope covers every slice or area reached. `<A>` is an area folder, `<U>` a use-case folder
+(anything but `_Shared`). The project replaces the folder names to match its layout (`CLAUDE.md`, *Tech
+stack*) and records the table in its own README or spec when it differs.
+
+| # | Changed file | Counts as | Scope | Slow tests |
+|---|---|---|---|---|
+| 1 | `src/**/Features/<A>/<U>/**` and its mirrored tests (the slice's own registration file included) | one slice | `slice` | left out |
+| 2 | two or more slices of one area (row 1), or tests directly in an area's folder | one area | `area` | left out |
+| 3 | `src/**/Features/<A>/_Shared/**` (the area's own registration file included) | the area's shared code | `area` | **back** |
+| 4 | tests of an area's `_Shared` folder | tests of shared code | `area` | left out |
+| 5 | any other file under `src/`: kernel (database context and migrations included), host and startup, configuration, static assets, project files, any shared kit or library | kernel, host, shared infrastructure | `full` | all run |
+| 6 | shared test helpers (`Support/`), test project files, build and tooling settings (solution, package versions, SDK pin, editorconfig) | shared test helpers or build | `full` | all run |
+| 7 | any other file under `tests/` (journeys, host tests, architecture tests, ...) | a test outside the slices | no change | edited tests run |
+| 8 | shipped build files (`Dockerfile`, compose files) | build files | no change | also run the architecture tests, if any |
+| 9 | anything else (`docs/`, `.claude/`, `tools/`, CI settings, `*.md`) | not run by local tests | no change | none |
+
+### Commands
+
+The commands live in `CLAUDE.md` (*Tech stack*), one line per step, in the stack's own filter syntax. `<ns>`
+means the namespace or path of each slice or area reached. Whoever fills in the stack writes all six.
+
+| Step | When | What runs |
 |---|---|---|
-| `slice` (default) | The change stays inside one slice's folder and its mirrored tests | Build, plus the tests of that slice (e.g. `--filter-namespace "*Features.Services.ManageServices*"`) |
-| `area` | Touches an area's `Shared` folder or several slices of one area | Build, plus the tests of that area |
-| `full` | Touches the kernel, the shared `DbContext`, migrations, DI registration, infrastructure or `ShopKit.Base` | Build, plus the full suite |
+| 1a scope, slow left out | `slice` or `area`, no `_Shared` file | tests of `<ns>`, excluding the slow marker |
+| 1b scope, slow back | a `_Shared` file (row 3) | tests of `<ns>`, slow included |
+| 1c full | `full` | every test, as CI (steps 2 to 4 are inside it) |
+| 2 the other slow tests | with 1b | slow tests outside `<ns>` |
+| 3 host-boot smoke | a registration file changed, not `full` | the smoke tests |
+| 4 edited tests | a test class the branch added or edited that steps 1 to 3 did not run | those classes |
 
 Rules:
 - Slices never use each other's types, so a change confined to one slice cannot break another; that is why `slice` is safe as the default.
-- CI runs the full suite on every PR, and it must be green before the product owner merges. Nobody else repeats it.
-- Whoever runs a reduced scope logs the filter they used in the *Log*.
-- A `qa_scope` below what the diff touches is a reviewer finding.
+- Filters of different kinds may combine as AND, not OR, in some runners (xUnit's switches do); if so, steps 2 and 3 are separate commands. Check the stack's behaviour once and record it.
+- A command that selects **0 tests in total** is a mistake: fix the filter (a runner flag that ignores "no tests in this project" can hide it).
+- Whoever runs a command writes it and its test count in the *Log*.
+- A scope, slow-test step or smoke below what the diff reaches is a reviewer finding.
+- CI runs every test, unfiltered, on every PR; it must be green before the product owner merges. Nobody else repeats it.
+
+Two examples:
+
+- **Marta's item** adds a button to the move-booking page in `Features/Calendar/MoveBooking/` and one line to
+  its registration file. Scope `slice`; step 1a (the slice's race tests, tagged slow, are left out, CI runs
+  them), then step 3.
+- **Joao's item** changes `Features/Calendar/_Shared/ScheduleLockedWrite.cs`. Scope `area`; step 1b (all
+  calendar tests, race tests included), then step 2 (the slow journeys of other areas).
 
 ## Scannable sections
 

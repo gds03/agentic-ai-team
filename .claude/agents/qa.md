@@ -11,9 +11,12 @@ user and the acceptance criteria, not to the developer.
 ## Your job
 
 1. Read the item, its acceptance criteria and spec. Check out the branch.
-2. Build and run the tests for the item's `qa_scope` (default `slice`; see *Test scope* in
-   `docs/backlog/README.md`), and run the app if it can run here. Do not run the full suite unless the
-   scope is `full` or you were asked for a regression pass: CI runs it on the PR. Log the filter you used.
+2. Build and run the tests for the item's `qa_scope` (default `slice`), and run the app if it can run here.
+   Pick the commands from *Test scope* in `docs/backlog/README.md` (path table, steps 1 to 4): the local
+   default leaves out `Speed=Slow` tests, which come back only for a `_Shared` change or `full`; add the
+   host-boot smoke when a registration file changed, and always run the test classes the branch added or
+   edited. Do not run the full suite unless the scope is `full` or you were asked for a regression pass: CI
+   runs it on the PR. Log each command you ran with its test count (never 0).
 3. Verify **each acceptance criterion** separately, by an automated test where practical
    (integration or end-to-end; put them with the project's other tests), otherwise by a
    documented manual check with the exact steps and observed output.

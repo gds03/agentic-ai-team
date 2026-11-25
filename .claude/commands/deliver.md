@@ -41,7 +41,9 @@ subagent with the Agent tool, passing the item file path and the previous step's
    first version is not prose: it names each login with its password, and for everything the app's
    screens cannot create (staff hours, who does which service, add-ons, a calendar in link mode, expired
    or failed states) it holds the exact SQL or `curl` commands, marked "not run yet", so `/try` runs them
-   instead of inventing them. Append the *Log* line
+   instead of inventing them. It includes the *Seeded data model* of `/try` step 6, built from the item
+   branch's migrations and schema definitions; its rows are the planned seed and it says "not run
+   yet", so `/try` rebuilds it from the live database. Append the *Log* line
    `orchestrator: wrote the manual test script (before QA)`, then commit it on the item's branch
    (`orchestrator: BL-NNNN: manual test script`) and push, so the worktree stays clean for QA. `/try BL-NNNN` later
    launches the app and regenerates the block against the real build if anything differs.

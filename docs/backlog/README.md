@@ -308,6 +308,10 @@ Example:
   one code span holding two values. `tools/docs.mjs` makes every code span inside this block
   click-to-copy, so a value that is not in code cannot be copied. Expected results stay prose; put a
   value in code in an *Expected* only when the owner should compare it with something exact.
+  After the *Seeded data* list comes the **Seeded data model**: a text diagram of the tables around the
+  item (seeded and empty, with how they connect), one table of real rows per seeded table with short
+  labels for long ids, what the item reads or writes, and the empty neighbours. It shows no hashes or
+  secrets. The full rules are in [`.claude/commands/try.md`](../../.claude/commands/try.md), step 6.
 - **Open questions**: for the product owner. Unanswered questions block the item. Every question has
   **examples**, so the owner sees the real problem and decides without reading the spec:
   - One line says what the owner would notice (screen, customer message, money, time), in product words. No

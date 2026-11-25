@@ -23,8 +23,9 @@ It works at any point once the item has a branch or PR (in review, in QA or done
    **One exception: the *Seeded data* block.** After the seed has run, replace that block (and only
    it) with the real values: logins and passwords, URLs, names, ids, prices, and what was created by
    SQL instead of the UI. A `/deliver` first version is written before anything exists, so it has no
-   real logins, and the owner must never be left without one. Do not rewrite the steps and do not add a
-   *Log* line. Still do steps 2-4 (launch, confirm routes)
+   real logins, and the owner must never be left without one. The *Seeded data model* (step 6) belongs
+   to this exception: rebuild it from the live database, and add it if the saved script has none. Do not
+   rewrite the steps and do not add a *Log* line. Still do steps 2-4 (launch, confirm routes)
    and 8. Regenerate (full steps 5-7, replacing the block) only with `--refresh`, or when the
    item's acceptance criteria or *Design* changed after the script was written (check `git log` on
    the item file); say which reason applied.
@@ -62,6 +63,7 @@ It works at any point once the item has a branch or PR (in review, in QA or done
    QA evidence, in this shape and nothing longer than it needs to be:
    - where to go (app URL, mail catcher URL) and the **Seeded data** list from step 5 (accounts,
      records that already exist); the owner creates nothing before the first step;
+   - right after that list, the **Seeded data model** (below);
    - **every value the owner types or pastes is its own inline code span with the real value**
      (email, password, name, URL, slug, price, token, command, SQL), one value per span, so the docs
      viewer (`tools/docs.mjs`) can copy it on click; "enter a 12-character password" without a value to
@@ -73,6 +75,28 @@ It works at any point once the item has a branch or PR (in review, in QA or done
    - what cannot be tested by hand yet because a later item builds it, and any known
      deviation the product owner has not accepted yet (name it so they can decide);
    - a closing line asking them to report anything that surprises them.
+
+   **Seeded data model.** The product owner learns the data model as items are delivered, so the script
+   shows where the seeded rows live and how the tables connect (in a store without tables, read table
+   as collection; a project with no database leaves the model out). Take tables, columns, foreign keys,
+   unique indexes and rows from the live database (its schema catalog and plain queries), never from
+   memory. It starts with a bold **Seeded data model** line (not a nested
+   `<details>`, which the docs viewer cannot render) and holds, in this order:
+   - **A diagram** in a text code block, top to bottom, at most 80 columns, with a one-line legend:
+     `[n]` rows seeded, `[ ]` empty, `└─` points at its parent, `~` a link with no foreign key. It shows
+     the tables the item reads or writes, the seeded tables and their direct neighbours, empty ones
+     included, each with a few words on what it holds.
+   - **One markdown table per seeded table**: its name, row count and the rule that matters (key,
+     "at most one per shop"), then the real rows. Only the columns that help to understand it. Replace
+     long internal ids with short labels (`U1`, `S1`) used the same way in every table; keep values the
+     owner can recognise elsewhere (emails, provider ids). Never password or token hashes, keys or
+     secrets. A very large set shows a few rows and says how many there are.
+   - **Mark what the item reads, writes or adds** (new tables and columns too), and say which missing
+     row explains an expected result ("no row for this shop, so no button").
+   - **A table of the empty neighbours**: what each would hold and how it links.
+   - **The rest in brief**: a connected area the item does not touch (another schema, say) is one line
+     in the main diagram, plus a compact tree of its table names marked as empty or not. Leave out
+     framework and migration history tables, or name them in one line.
 7. **Save the script to the item.** Write the same script into the item file as a collapsed
    section, placed after *Design* and before *Open questions* (replace the block if a previous
    `/try` or `/deliver` left one; `/deliver` writes a first version before QA, so refine it against the
